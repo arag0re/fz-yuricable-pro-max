@@ -5,9 +5,8 @@ Implementation to use a Flipper-Zero as DCSD-Cable for iPhones
 ## Docs
 
 Here some specs about the protocol used:
-
-    * Name: SDQ (IDBUS) developed by Texas Instruments
-    * Source: [Reversed Protocol](https://nyansatan.github.io/lightning/)
+Name: SDQ (IDBUS) developed by Texas Instruments
+Source: [Reversed Protocol](https://nyansatan.github.io/lightning/)
 
 ## Flipper Docs
 
