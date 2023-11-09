@@ -1,0 +1,14 @@
+App(
+    appid="iphone_dcsd",
+    name="iPhone DCSD Cable",
+    apptype=FlipperAppType.EXTERNAL,
+    entry_point="iphone_dcsd_app",
+    stack_size=2 * 1024,
+    fap_category="Tools",
+    fap_version="0.1",
+    fap_icon="apple_10px.png",
+    fap_description="Use a f0 as DCSD Cable for iPhones",
+    fap_author="arag0re.eth",
+    fap_weburl="https://github.com/arag0re/f0-iphone-dcsd",
+    fap_icon_assets="images",
+)
