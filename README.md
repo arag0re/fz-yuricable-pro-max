@@ -47,3 +47,7 @@ Die `.fap`-Datei liegt dann im `./dist`-Ordner
 
 * Repo:  [UFBT GitHub](https://github.com/flipperdevices/flipperzero-ufbt)
 * Docs:  [UFBT DOCS](https://github.com/flipperdevices/flipperzero-ufbt/blob/dev/README.md)
+
+##### Raspberry Pi Pico Implementation 
+
+* [Tamarin Firmware](https://github.com/stacksmashing/tamarin-firmware)
