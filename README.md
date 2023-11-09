@@ -19,25 +19,31 @@ Here some specs about the protocol used:
 
 ### Build
 
-    1. Installation des Build-Tools:
+#### Installation des Build-Tools
 
-    ```txt
-    Linux & macOS: python3 -m pip install --upgrade ufbt
-    Windows: py -m pip install --upgrade ufbt
-    ```
+Linux & macOS:
 
-    2. Build der App:
+```sh
+python3 -m pip install --upgrade ufbt
+```
 
-    Navigiere in das Rootverzeichnis der App und führe dort nach installation von ufbt folgenden Befehl aus:
+Windows:
 
-    ```txt
-    ufbt
-    ```
+```sh
+py -m pip install --upgrade ufbt
+```
 
-    Die `.fap`-Datei liegt dann im `./dist`-Ordner
+#### Bauen der App
+
+Navigiere in das Rootverzeichnis der App und führe dort nach installation von ufbt folgenden Befehl aus:
+
+```txt
+ufbt
+```
+
+Die `.fap`-Datei liegt dann im `./dist`-Ordner
 
 #### UFBT
 
-Repo:  [UFBT GitHub](https://github.com/flipperdevices/flipperzero-ufbt)
-Docs:  [UFBT DOCS](https://github.com/flipperdevices/flipperzero-ufbt/blob/dev/README.md)
-
+* Repo:  [UFBT GitHub](https://github.com/flipperdevices/flipperzero-ufbt)
+* Docs:  [UFBT DOCS](https://github.com/flipperdevices/flipperzero-ufbt/blob/dev/README.md)
