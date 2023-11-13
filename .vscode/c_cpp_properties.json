@@ -1,0 +1,17 @@
+{
+  "configurations": [
+    {
+      "name": "macos-clang-arm64",
+      "compilerPath": "/usr/bin/clang",
+      "intelliSenseMode": "macos-clang-arm64",
+      "compileCommands": "${workspaceFolder}/.vscode/compile_commands.json",
+      "configurationProvider": "ms-vscode.cpptools",
+      "cStandard": "${default}",
+      "cppStandard": "${default}",
+      "includePath": [
+        "${workspaceFolder}/**"
+      ]
+    }
+  ],
+  "version": 4
+}

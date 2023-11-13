@@ -6,9 +6,8 @@
 #include <furi_hal_bus.h>
 #include <stm32wbxx_ll_dma.h>
 #include <furi_hal_cortex.h>
-#include <stdio.h>
 
-#define SDQ_PIN gpio_ibutton // GPIO shared with iButton
+#define SDQ_PIN gpio_ext_pa7 // GPIO 2
 #define BUFFER_SIZE 4
 #define BREAK_MIN_DURATION 12
 #define BREAK_MAX_DURATION 16
@@ -35,7 +34,13 @@ void delay_us(uint32_t us) {
 
 void SDQ_Init_rx(void) {
     // Initialize the SDQ pin as an input
-    furi_hal_gpio_init(&SDQ_PIN, GpioModeAnalog, GpioPullNo, GpioSpeedVeryHigh);
+    furi_hal_gpio_init(&SDQ_PIN, GpioModeInput, GpioPullNo, GpioSpeedVeryHigh);
+    furi_hal_bus_enable(FuriHalBusTIM17);
+    // Configure TIM
+    LL_TIM_SetPrescaler(TIM17, SystemCoreClock / 1000000 - 1);
+    LL_TIM_SetCounterMode(TIM17, LL_TIM_COUNTERMODE_UP);
+    LL_TIM_SetAutoReload(TIM17, 0xFFFF);
+    LL_TIM_SetClockDivision(TIM17, LL_TIM_CLOCKDIVISION_DIV1);
 }
 
 void SDQ_Init_tx(void) {
@@ -43,9 +48,27 @@ void SDQ_Init_tx(void) {
     furi_hal_gpio_init_simple(&SDQ_PIN, GpioModeOutputPushPull);
 }
 
-bool SDQ_Read(void) {
+void IntCallBackTest() {
+    FURI_LOG_I("INFO", "Hello From Callback");
+}
+
+void SDQ_Read_Byte(void) {
     // Read the state of the SDQ pin
-    return furi_hal_gpio_read(&SDQ_PIN);
+    LL_TIM_SetCounter(TIM17, 0);
+    while(furi_hal_gpio_read(&SDQ_PIN)) {
+        if(!furi_hal_gpio_read(&SDQ_PIN)) {
+            LL_TIM_EnableCounter(TIM17);
+            break;
+        }
+    }
+    uint32_t timer;
+    while(!furi_hal_gpio_read(&SDQ_PIN)) {
+        if(furi_hal_gpio_read(&SDQ_PIN)) {
+            timer = LL_TIM_GetCounter(TIM17);
+            FURI_LOG_I("INFO", "SDQ bit: %lu", timer);
+            break;
+        }
+    }
 }
 
 unsigned char reverse_byte(unsigned char b) {
@@ -58,11 +81,9 @@ unsigned char reverse_byte(unsigned char b) {
 int32_t iphone_dcsd_app(void* p) {
     UNUSED(p);
     FURI_LOG_I("YURIAPP", "Starting the SDQ Listener on GPIO 2!");
-    //setup_rx();
+    SDQ_Init_rx();
     while(1) {
-        SDQ_Init_rx();
-        bool bit = SDQ_Read();
-        FURI_LOG_I("SDQ", "Bit: %d", bit);
+        SDQ_Read_Byte();
         //FURI_LOG_I("SDQ_BUFFER", "0x%02X", received_byte);
         //if(received_byte == TRISTAR_POLL) {
         //    FURI_LOG_I("INFO", "Received TRISTART_POLL 0x%02X", received_byte);
