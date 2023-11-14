@@ -7,7 +7,7 @@
 #include <stm32wbxx_ll_dma.h>
 #include <furi_hal_cortex.h>
 
-#define SDQ_PIN gpio_ext_pa7 // GPIO 2
+#define SDQ_PIN gpio_ext_pc3 // GPIO 2
 #define BUFFER_SIZE 4
 #define BREAK_MIN_DURATION 12
 #define BREAK_MAX_DURATION 16
@@ -52,6 +52,12 @@ void IntCallBackTest() {
     FURI_LOG_I("INFO", "Hello From Callback");
 }
 
+void setup() {
+    furi_hal_gpio_init(&SDQ_PIN, GpioModeInterruptFall, GpioPullUp, GpioSpeedVeryHigh);
+    furi_hal_gpio_add_int_callback(&SDQ_PIN, IntCallBackTest, NULL);
+    //furi_hal_gpio_enable_int_callback(&SDQ_PIN);
+}
+
 void SDQ_Read_Byte(void) {
     // Read the state of the SDQ pin
     LL_TIM_SetCounter(TIM17, 0);
@@ -81,9 +87,10 @@ unsigned char reverse_byte(unsigned char b) {
 int32_t iphone_dcsd_app(void* p) {
     UNUSED(p);
     FURI_LOG_I("YURIAPP", "Starting the SDQ Listener on GPIO 2!");
-    SDQ_Init_rx();
+    //SDQ_Init_rx();
+    setup();
     while(1) {
-        SDQ_Read_Byte();
+        //SDQ_Read_Byte();
         //FURI_LOG_I("SDQ_BUFFER", "0x%02X", received_byte);
         //if(received_byte == TRISTAR_POLL) {
         //    FURI_LOG_I("INFO", "Received TRISTART_POLL 0x%02X", received_byte);
