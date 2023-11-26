@@ -2,6 +2,8 @@
 
 Implementation to use a Flipper-Zero as SWD/DCSD-Cable for iPhones just like known Kanzi/Kong/Tamarin Cables
 
+> ![](docs/YuriCableLogo.svg)
+
 ## Docs
 
 Here some specs about the protocol used:
@@ -9,27 +11,78 @@ Here some specs about the protocol used:
 * Name: SDQ (IDBUS) developed by Texas Instruments
 * Source: [Reversed Protocol](https://nyansatan.github.io/lightning/)
 
+## Project Setup
+
+### Create .vscode
+
+```shell
+ufbt vscode_dist
+```
+
+### Open in CLion
+
+Open the Project in CLion
+
 ## Flipper Docs
 
 [Flipper Docs](https://docs.flipper.net/)
 
 ## Pinout Flipper Zero
 
-![](assets/EnLvCM5-J45B9sBm6UBig_flipper-zero-gpio-pinout-flipper-zero-12f7b9c6-drawing-rev-04.jpg)
+![](docs/pinout.jpg)
+
+## Pinout Lightning
+
+![](docs/BreakoutPinout.jpg)
+![](docs/Connector.jpg)
 
 ### Build
 
-#### Installation des Build-Tools
+#### Build-Tool
 
-Linux & macOS:
-
-```sh
-python3 -m pip install --upgrade ufbt
+```shell
+python -m pip install --upgrade ufbt
 ```
 
-Windows:
+#### Update Firmware
 
-```sh
++ Download Update
+
+```shell
+ufbt update --channel=release
+```
+
++ Upload to Flipper
+
+```shell
+ufbt flash_usb
+```
+
+#### Build
+
+Navigiere in das Rootverzeichnis der App und führe dort nach installation von ufbt folgenden Befehl aus:
+
+```shell
+ufbt
+```
+
+Die `.fap`-Datei liegt dann im `./dist`-Ordner
+
+#### Auto Launch
+
+```shell
+ufbt launch
+```
+
+#### UFBT
+
+* Repo:  [UFBT GitHub](https://github.com/flipperdevices/flipperzero-ufbt)
+* Docs:  [UFBT DOCS](https://github.com/flipperdevices/flipperzero-ufbt/blob/dev/README.md)
+
+##### Raspberry Pi Pico Implementation
+
+* [Tamarin Firmware](https://github.com/stacksmashing/tamarin-firmware)
+
 py -m pip install --upgrade ufbt
 ```
 
