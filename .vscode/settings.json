@@ -7,10 +7,12 @@
   "cortex-debug.gdbPath": "/Users/antonstadie/.ufbt/toolchain/x86_64-darwin/bin/arm-none-eabi-gdb-py",
   "editor.formatOnSave": true,
   "files.associations": {
+    "*.yml": "dockercompose",
     "*.scons": "python",
     "SConscript": "python",
     "SConstruct": "python",
-    "*.fam": "python"
+    "*.fam": "python",
+    "stm32wbxx_ll_gpio.h": "c"
   },
   "cortex-debug.registerUseNaturalFormat": false,
   "python.analysis.typeCheckingMode": "off",
