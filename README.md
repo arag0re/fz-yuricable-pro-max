@@ -1,6 +1,6 @@
-# Flipper Zero DCSD Cable
+# YuriCable Pro Max
 
-Implementation to use a Flipper-Zero as DCSD-Cable for iPhones
+Implementation to use a Flipper-Zero as SWD/DCSD-Cable for iPhones just like known Kanzi/Kong/Tamarin Cables
 
 ## Docs
 
