@@ -4,21 +4,6 @@ Implementation to use a Flipper-Zero as SWD/DCSD-Cable for iPhones just like kno
 
 > ![](docs/YuriCableLogo.svg)
 
-## SDQ
-
-Here some specs about the protocol used:
-
-* Name: SDQ (IDBUS) developed by Texas Instruments
-* Source: [Reversed Protocol](https://nyansatan.github.io/lightning/)
-
-Credits for SDQ reverse engineering to [@nyansatan](https://github.com/nyansatan)
-
-## Tamarin Cable Implementation
-
-* [Tamarin Firmware](https://github.com/stacksmashing/tamarin-firmware)
-
-Credits to [@stacksmashing](https://github.com/stacksmashing) for an example pi pico implementation and his talk on this subject (watch [here](https://www.youtube.com/watch?v=8p3Oi4DL0eI&list=PL0P69gP-VL8eSCSNY-gQefgY1DXBSlNJC&index=6&t=616s))
-
 ## Project Setup
 
 ### Create .vscode
@@ -82,30 +67,22 @@ Die `.fap`-Datei liegt dann im `./dist`-Ordner
 ufbt launch
 ```
 
-#### UFBT
+## SDQ
 
-* Repo:  [UFBT GitHub](https://github.com/flipperdevices/flipperzero-ufbt)
-* Docs:  [UFBT DOCS](https://github.com/flipperdevices/flipperzero-ufbt/blob/dev/README.md)
+Here some specs about the protocol used:
 
-##### Raspberry Pi Pico Implementation
+* Name: SDQ (IDBUS) developed by Texas Instruments
+* Source: [Reversed Protocol](https://nyansatan.github.io/lightning/)
+
+Credits for SDQ reverse engineering to [@nyansatan](https://github.com/nyansatan)
+
+## Tamarin Cable Implementation
 
 * [Tamarin Firmware](https://github.com/stacksmashing/tamarin-firmware)
 
-py -m pip install --upgrade ufbt
-```
+Credits to [@stacksmashing](https://github.com/stacksmashing) for an example pi pico implementation and his defcon talk on this subject. (watch [here](https://www.youtube.com/watch?v=8p3Oi4DL0eI&list=PL0P69gP-VL8eSCSNY-gQefgY1DXBSlNJC&index=6&t=616s))
 
-#### Bauen der App
-
-Navigiere in das Rootverzeichnis der App und führe dort nach installation von ufbt folgenden Befehl aus:
-
-```txt
-ufbt
-```
-
-Die `.fap`-Datei liegt dann im `./dist`-Ordner
-
-#### UFBT
+## UFBT
 
 * Repo:  [UFBT GitHub](https://github.com/flipperdevices/flipperzero-ufbt)
 * Docs:  [UFBT DOCS](https://github.com/flipperdevices/flipperzero-ufbt/blob/dev/README.md)
-
