@@ -66,8 +66,9 @@ Die `.fap`-Datei liegt dann im `./dist`-Ordner
 ```shell
 ufbt launch
 ```
+## Docs and credits
 
-## SDQ
+### SDQ
 
 Here some specs about the protocol used:
 
@@ -76,13 +77,17 @@ Here some specs about the protocol used:
 
 Credits for SDQ reverse engineering to [@nyansatan](https://github.com/nyansatan)
 
-## Tamarin Cable Implementation
+### Tamarin Cable Implementation
 
 * [Tamarin Firmware](https://github.com/stacksmashing/tamarin-firmware)
 
 Credits to [@stacksmashing](https://github.com/stacksmashing) for an example pi pico implementation and his defcon talk on this subject. (watch [here](https://www.youtube.com/watch?v=8p3Oi4DL0eI&list=PL0P69gP-VL8eSCSNY-gQefgY1DXBSlNJC&index=6&t=616s))
 
-## UFBT
+### UFBT
 
 * Repo:  [UFBT GitHub](https://github.com/flipperdevices/flipperzero-ufbt)
 * Docs:  [UFBT DOCS](https://github.com/flipperdevices/flipperzero-ufbt/blob/dev/README.md)
+
+### ARM Stuff
+
+* DWT_CYCCNT explained: [ARM DOCS](https://developer.arm.com/documentation/ddi0403/d/Debug-Architecture/ARMv7-M-Debug/The-Data-Watchpoint-and-Trace-unit/CYCCNT-cycle-counter-and-related-timers?lang=en)
