@@ -11,7 +11,7 @@ Here some specs about the protocol used:
 * Name: SDQ (IDBUS) developed by Texas Instruments
 * Source: [Reversed Protocol](https://nyansatan.github.io/lightning/)
 
-Credits to @nyansatan
+Credits for SDQ reverse engineering to [@nyansatan](https://github.com/nyansatan)
 
 ## Project Setup
 
