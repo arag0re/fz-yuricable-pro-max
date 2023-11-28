@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <lib/crc/crc.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,7 +59,6 @@ typedef enum {
 
 typedef struct SDQDevice SDQDevice;
 typedef struct SDQSlave SDQSlave;
-
 typedef bool (*SDQSlaveResetCallback)(bool is_short, void* context);
 typedef bool (*SDQSlaveCommandCallback)(uint8_t command, void* context);
 typedef void (*SDQSlaveResultCallback)(void* context);
