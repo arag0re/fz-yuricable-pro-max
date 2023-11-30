@@ -22,12 +22,17 @@ Open the Project in CLion
 
 ## Pinout Flipper Zero
 
-![](docs/pinout.jpg)
+![](docs/FlipperZeroPinout.jpg)
 
 ## Pinout Lightning
 
-![](docs/BreakoutPinout.jpg)
-![](docs/Connector.jpg)
+Breakout Color Coding
+
+![](docs/LightningBreakoutPinout.jpg)
+
+Female Port Pinout
+
+![](docs/Connector2.jpg)
 
 ### Build
 
