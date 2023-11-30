@@ -26,24 +26,3 @@ enum TRISTAR_REQUESTS {
     TRISTAR_POWER = 0x70,
     TRISTAR_UNKNOWN_76 = 0x76,
 };
-
-typedef struct {
-    uint32_t BREAK_meaningful_min;
-    uint32_t BREAK_meaningful_max;
-    uint32_t BREAK_meaningful;
-    uint32_t BREAK_recovery;
-    uint32_t WAKE_meaningful_min;
-    uint32_t WAKE_meaningful_max;
-    uint32_t WAKE_meaningful;
-    uint32_t WAKE_recovery;
-    uint32_t ZERO_meaningful_min;
-    uint32_t ZERO_meaningful_max;
-    uint32_t ZERO_meaningful;
-    uint32_t ZERO_recovery;
-    uint32_t ONE_meaningful_min;
-    uint32_t ONE_meaningful_max;
-    uint32_t ONE_meaningful;
-    uint32_t ONE_recovery;
-    uint32_t ZERO_STOP_recovery;
-    uint32_t ONE_STOP_recovery;
-} SDQTimings;
