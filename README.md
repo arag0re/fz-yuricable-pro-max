@@ -34,9 +34,11 @@ Female Port Pinout
 
 ![](docs/Connector2.jpg)
 
-### Build
+## Build
 
-#### Build-Tool
+### Build-Tool
+
+#### Install Build-Tool
 
 ```shell
 python -m pip install --upgrade ufbt
@@ -50,13 +52,21 @@ python -m pip install --upgrade ufbt
 ufbt update --channel=release
 ```
 
+#### Build App FLash it
+
 + Upload to Flipper
 
 ```shell
 ufbt flash_usb
 ```
 
-#### Build
++ VSCode setup and build
+
+```shell
+ufbt faps vscode_dist
+```
+
+#### Build FAP
 
 Navigiere in das Rootverzeichnis der App und führe dort nach installation von ufbt folgenden Befehl aus:
 
@@ -71,28 +81,64 @@ Die `.fap`-Datei liegt dann im `./dist`-Ordner
 ```shell
 ufbt launch
 ```
+
+## Debug
+
+### ST-Link
+
++ [Older Guide for ST-Link](https://www.drewgreen.net/debugging-flipper-zero-firmware-with-st-link-v2/)
+
+### JLink
+
+#### Install JLINK Software
+
+[Download latest JLINK Software](https://www.segger.com/downloads/jlink/)
+
+Then update the Firmware of the JLink.
+
+#### Pinout
+
++ Pinoout of the Segger J-Link
+
+![JLINK](docs/JLINK.svg)
+
+#### Pin Mapping
+
+Mapping Table:
+
+```txt
+Flipper GPIO |  JLINK GPIO
+__________________________
+12 (SIO)     |  7 (TMS)
+11 (GND)     |  8 (GND)
+10 (SWC)     |  9 (TCK)
+09 (3v3)     |  1 (VTref)
+```
+
+<img src="docs/FlipperJLINK.jpg" alt="FlipperJLINK" height="50%"/>
+
 ## Docs and credits
 
 ### SDQ
 
 Here some specs about the protocol used:
 
-* Name: SDQ (IDBUS) developed by Texas Instruments
-* Source: [Reversed Protocol](https://nyansatan.github.io/lightning/)
++ Name: SDQ (IDBUS) developed by Texas Instruments
++ Source: [Reversed Protocol](https://nyansatan.github.io/lightning/)
 
 Credits for SDQ reverse engineering to [@nyansatan](https://github.com/nyansatan)
 
 ### Tamarin Cable Implementation
 
-* [Tamarin Firmware](https://github.com/stacksmashing/tamarin-firmware)
++ [Tamarin Firmware](https://github.com/stacksmashing/tamarin-firmware)
 
 Credits to [@stacksmashing](https://github.com/stacksmashing) for an example pi pico implementation and his defcon talk on this subject. (watch [here](https://www.youtube.com/watch?v=8p3Oi4DL0eI&list=PL0P69gP-VL8eSCSNY-gQefgY1DXBSlNJC&index=6&t=616s))
 
 ### UFBT
 
-* Repo:  [UFBT GitHub](https://github.com/flipperdevices/flipperzero-ufbt)
-* Docs:  [UFBT DOCS](https://github.com/flipperdevices/flipperzero-ufbt/blob/dev/README.md)
++ Repo:  [UFBT GitHub](https://github.com/flipperdevices/flipperzero-ufbt)
++ Docs:  [UFBT DOCS](https://github.com/flipperdevices/flipperzero-ufbt/blob/dev/README.md)
 
 ### ARM Stuff
 
-* DWT_CYCCNT explained: [ARM DOCS](https://developer.arm.com/documentation/ddi0403/d/Debug-Architecture/ARMv7-M-Debug/The-Data-Watchpoint-and-Trace-unit/CYCCNT-cycle-counter-and-related-timers?lang=en)
++ DWT_CYCCNT explained: [ARM DOCS](https://developer.arm.com/documentation/ddi0403/d/Debug-Architecture/ARMv7-M-Debug/The-Data-Watchpoint-and-Trace-unit/CYCCNT-cycle-counter-and-related-timers?lang=en)
