@@ -100,7 +100,7 @@ Then update the Firmware of the JLink.
 
 + Pinoout of the Segger J-Link
 
-![JLINK](docs/JLINK.svg)
+![JLINK](docs/JLINK.png)
 
 #### Pin Mapping
 
