@@ -100,7 +100,7 @@ Then update the Firmware of the JLink.
 
 + Pinoout of the Segger J-Link
 
-![JLINK](docs/JLINK.png)
+<img src="docs/JLINK.png" alt="JLINK" height="500px"/>
 
 #### Pin Mapping
 
@@ -115,7 +115,7 @@ __________________________
 09 (3v3)     |  1 (VTref)
 ```
 
-<img src="docs/FlipperJLINK.jpg" alt="FlipperJLINK" height="50%"/>
+<img src="docs/FlipperJLINK.jpg" alt="FlipperJLINK" height="850px"/>
 
 ## Docs and credits
 
