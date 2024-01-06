@@ -117,7 +117,7 @@ __________________________
 
 <img src="docs/FlipperJLINK.jpg" alt="FlipperJLINK" height="850px"/>
 
-or buy a JTAG Adapter for Flipper Zero by [@jrozner](https://twitter.com/jrozner) on twitter / X on [Tindie](https://www.tindie.com/products/cuttrace/flipper-zero-jlink-adapter/) and extend the GPIO-Pins
+or buy a JTAG Adapter for Flipper Zero by [@jrozner](https://twitter.com/jrozner) on [Tindie](https://www.tindie.com/products/cuttrace/flipper-zero-jlink-adapter/) and extend the GPIO-Pins
 
 <img src="docs/flipper_jlink_adapter.jpg" alt="FlipperJLINKAdapter" height="850px"/>
 
