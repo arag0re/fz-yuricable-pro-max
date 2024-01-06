@@ -1,5 +1,7 @@
 #include <sdq_slave.h>
 
+#define TIMEOUT_MAX 15000 /* Maximum time before general timeout */
+
 struct SDQSlave {
     const GpioPin* gpio_pin;
     SDQTimings timings;
@@ -67,7 +69,6 @@ static bool sdq_slave_wait_while_gpio_is(SDQSlave* bus, uint32_t time_us, const 
 
 static inline bool sdq_slave_receive_and_process_command(SDQSlave* bus) {
     if(bus->error == SDQSlaveErrorResetInProgress) {
-    } else if(bus->error == SDQSlaveErrorNone) {
         uint8_t command;
         if(sdq_slave_receive(bus, &command, sizeof(command))) {
             furi_assert(bus->command_callback);
@@ -81,13 +82,11 @@ static inline bool sdq_slave_receive_and_process_command(SDQSlave* bus) {
 }
 
 static inline bool sdq_slave_bus_start(SDQSlave* bus) {
-    FURI_CRITICAL_ENTER();
     furi_hal_gpio_init(bus->gpio_pin, GpioModeOutputOpenDrain, GpioPullUp, GpioSpeedLow);
     while(sdq_slave_receive_and_process_command(bus))
         ;
     const bool result = (bus->error == SDQSlaveErrorNone);
     furi_hal_gpio_init(bus->gpio_pin, GpioModeInterruptRiseFall, GpioPullUp, GpioSpeedLow);
-    FURI_CRITICAL_EXIT();
     return result;
 }
 
@@ -114,12 +113,12 @@ static void sdq_slave_exti_callback(void* context) {
 void sdq_slave_start(SDQSlave* bus) {
     furi_hal_gpio_add_int_callback(bus->gpio_pin, sdq_slave_exti_callback, bus);
     furi_hal_gpio_write(bus->gpio_pin, true);
-    furi_hal_gpio_init(bus->gpio_pin, GpioModeInterruptRiseFall, GpioPullUp, GpioSpeedLow);
+    furi_hal_gpio_init(bus->gpio_pin, GpioModeInterruptRiseFall, GpioPullUp, GpioSpeedVeryHigh);
 }
 
 void sdq_slave_stop(SDQSlave* bus) {
     furi_hal_gpio_write(bus->gpio_pin, true);
-    furi_hal_gpio_init(bus->gpio_pin, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
+    furi_hal_gpio_init(bus->gpio_pin, GpioModeAnalog, GpioPullNo, GpioSpeedVeryHigh);
     furi_hal_gpio_remove_int_callback(bus->gpio_pin);
 }
 
@@ -138,19 +137,9 @@ void sdq_slave_set_result_callback(SDQSlave* bus, SDQSlaveResultCallback result_
     bus->result_callback_context = context;
 }
 
-bool sdq_slave_receive_bit(SDQSlave* bus) {
+uint8_t sdq_slave_receive_bit(SDQSlave* bus) {
     const SDQTimings* timings = &bus->timings;
-    // wait for the BREAK period (reset/synchronization)
-    if(!sdq_slave_wait_while_gpio_is(bus, timings->BREAK_meaningful_max, false)) {
-        bus->error = SDQSlaveErrorResetInProgress;
-        return false;
-    }
-    // wait for the WAKE period (transition to receiving or sending)
-    if(!sdq_slave_wait_while_gpio_is(bus, timings->WAKE_meaningful_max, true)) {
-        bus->error = SDQSlaveErrorTimeout;
-        return false;
-    }
-    return sdq_slave_wait_while_gpio_is(bus, timings->ZERO_meaningful_max, false);
+    return sdq_slave_wait_while_gpio_is(bus, timings->ONE_meaningful_max, false);
 }
 
 static bool sdq_slave_send_byte(SDQSlave* bus, uint8_t byte) {
@@ -197,18 +186,17 @@ bool sdq_slave_send(SDQSlave* bus, const uint8_t* data, size_t data_size) {
 
 bool sdq_slave_receive(SDQSlave* bus, uint8_t* data, size_t data_size) {
     furi_hal_gpio_write(bus->gpio_pin, true);
-    for(size_t i = 0; i < data_size; ++i) {
+    size_t bytes_received = 0;
+    for(; bytes_received < data_size; ++bytes_received) {
         uint8_t value = 0;
-        for(uint8_t mask = 0x80; mask != 0; mask >>= 1) {
+
+        for(uint8_t bit_mask = 0x01; bit_mask != 0; bit_mask <<= 1) {
             if(sdq_slave_receive_bit(bus)) {
-                value |= mask;
-            }
-            if(bus->error != SDQSlaveErrorNone) {
-                return false;
+                value |= bit_mask;
             }
         }
-        FURI_LOG_I("SDQ", "0x%02X", value);
-        data[i] = value;
+
+        data[bytes_received] = value;
     }
     // Receive CRC8
     uint8_t received_crc = data[data_size - 1];

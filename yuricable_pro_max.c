@@ -18,8 +18,12 @@ static void demo_render_callback(Canvas* canvas, void* ctx) {
         return;
     }
     DemoData* data = demo_context->data;
-    furi_string_printf(data->buffer, "yay");
     canvas_set_font(canvas, FontPrimary);
+    if(sdq_started) {
+        furi_string_printf(data->buffer, "SDQ Slave Active");
+    } else {
+        furi_string_printf(data->buffer, "SDQ Slave Inactive");
+    }
     canvas_draw_str_aligned(
         canvas, 10, 20, AlignLeft, AlignTop, furi_string_get_cstr(data->buffer));
     furi_mutex_release(demo_context->mutex);
@@ -60,10 +64,12 @@ int32_t yuricable_pro_max_app(void* p) {
                     if(!sdq_started) {
                         sdq_slave_start(mySDQSlave);
                         sdq_started = true;
+                        view_port_update(view_port);
                         FURI_LOG_I(TAG, "SDQ Slave started");
                     } else {
                         sdq_slave_stop(mySDQSlave);
                         sdq_started = false;
+                        view_port_update(view_port);
                         FURI_LOG_I(TAG, "SDQ Slave stopped");
                     }
                 }
