@@ -1,5 +1,4 @@
 dist/*
 .vscode
-.idea
 .clang-format
 .editorconfig
