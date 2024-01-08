@@ -139,7 +139,29 @@ void sdq_slave_set_result_callback(SDQSlave* bus, SDQSlaveResultCallback result_
 
 uint8_t sdq_slave_receive_bit(SDQSlave* bus) {
     const SDQTimings* timings = &bus->timings;
-    return sdq_slave_wait_while_gpio_is(bus, timings->ONE_meaningful_max, false);
+
+    // wait while bus is low
+    if (sdq_slave_wait_while_gpio_is(bus, timings->ONE_meaningful, false)) {
+        // wait while bus is high
+        if (!sdq_slave_wait_while_gpio_is(bus, timings->ONE_recovery, true)) {
+            bus->error = SDQSlaveErrorBitReadTiming;
+            return false;
+        }
+        return true;
+    }
+
+    // wait while bus is low
+    if (sdq_slave_wait_while_gpio_is(bus, timings->ZERO_meaningful-timings->ONE_meaningful, false)) {
+        // wait while bus is high
+        if (!sdq_slave_wait_while_gpio_is(bus, timings->ZERO_recovery, true)) {
+            bus->error = SDQSlaveErrorBitReadTiming;
+            return false;
+        }
+        return true;
+    }
+
+    bus->error = SDQSlaveErrorInvalidCommand;
+    return false;
 }
 
 static bool sdq_slave_send_byte(SDQSlave* bus, uint8_t byte) {

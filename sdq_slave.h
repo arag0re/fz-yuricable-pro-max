@@ -37,6 +37,7 @@ typedef enum {
     SDQSlaveErrorResetInProgress,
     SDQSlaveErrorPresenceConflict,
     SDQSlaveErrorInvalidCommand,
+    SDQSlaveErrorBitReadTiming,
     SDQSlaveErrorTimeout,
 } SDQSlaveError;
 
