@@ -93,20 +93,17 @@ static inline bool sdq_slave_bus_start(SDQSlave* bus) {
 static void sdq_slave_exti_callback(void* context) {
     SDQSlave* sdq_slave = context;
     const volatile bool input_state = furi_hal_gpio_read(sdq_slave->gpio_pin);
-    static uint32_t pulse_start = 0;
-    if(input_state) {
-        const uint32_t pulse_length =
-            (DWT->CYCCNT - pulse_start) / furi_hal_cortex_instructions_per_microsecond();
-        if((pulse_length >= sdq_slave->timings.BREAK_meaningful_min) &&
-           (pulse_length <= sdq_slave->timings.BREAK_meaningful_max)) {
-            sdq_slave->error = SDQSlaveErrorResetInProgress;
-            const bool result = sdq_slave_bus_start(sdq_slave);
-            if(result && sdq_slave->result_callback != NULL) {
-                sdq_slave->result_callback(sdq_slave->result_callback_context);
+    if (!input_state) {
+        SDQTimings timings = sdq_slave->timings;
+
+        if (sdq_slave_wait_while_gpio_is(sdq_slave, timings.BREAK_meaningful, false)) {
+            if (sdq_slave_wait_while_gpio_is(sdq_slave, timings.BREAK_recovery, true)) {
+                const bool result = sdq_slave_bus_start(sdq_slave);
+                if(result && sdq_slave->result_callback != NULL) {
+                    sdq_slave->result_callback(sdq_slave->result_callback_context);
+                }
             }
         }
-    } else {
-        pulse_start = DWT->CYCCNT;
     }
 }
 
