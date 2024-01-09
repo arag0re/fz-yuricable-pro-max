@@ -73,8 +73,8 @@ static bool sdq_slave_wait_while_gpio_is(SDQSlave* bus, uint32_t time_us, const 
 }
 
 static inline bool sdq_slave_receive_and_process_command(SDQSlave* bus) {
-    u_int8_t command;
-    if(sdq_slave_receive(bus, &command, sizeof(command))) {
+    uint8_t command[4] = {0};
+    if(sdq_slave_receive(bus, command, sizeof(command))) {
         furi_assert(bus->command_callback);
         if(bus->command_callback(command, bus->command_callback_context)) {
             return true;
@@ -84,11 +84,9 @@ static inline bool sdq_slave_receive_and_process_command(SDQSlave* bus) {
 }
 
 static inline bool sdq_slave_bus_start(SDQSlave* bus) {
-    //furi_hal_gpio_init(bus->gpio_pin, GpioModeOutputOpenDrain, GpioPullUp, GpioSpeedVeryHigh);
     while(sdq_slave_receive_and_process_command(bus))
         ;
     const bool result = (bus->error == SDQSlaveErrorNone);
-    //furi_hal_gpio_init(bus->gpio_pin, GpioModeInterruptRiseFall, GpioPullUp, GpioSpeedVeryHigh);
     return result;
 }
 
@@ -101,7 +99,9 @@ static void sdq_slave_exti_callback(void* context) {
             (DWT->CYCCNT - pulse_start) / furi_hal_cortex_instructions_per_microsecond();
         if((pulse_length >= sdq_slave->timings.BREAK_meaningful_min) &&
            (pulse_length <= sdq_slave->timings.BREAK_meaningful_max)) {
-            sdq_slave_bus_start(sdq_slave);
+            if(sdq_slave_wait_while_gpio_is(sdq_slave, sdq_slave->timings.BREAK_recovery, true)) {
+                sdq_slave_bus_start(sdq_slave);
+            }
         }
     } else {
         pulse_start = DWT->CYCCNT;
@@ -135,14 +135,21 @@ void sdq_slave_set_result_callback(SDQSlave* bus, SDQSlaveResultCallback result_
     bus->result_callback_context = context;
 }
 
-uint8_t sdq_slave_receive_bit(SDQSlave* bus) {
+uint8_t sdq_slave_receive_bit(SDQSlave* bus, bool isLastBitofByte) {
     const SDQTimings* timings = &bus->timings;
     // wait while bus is low for one meaningful
     if(sdq_slave_wait_while_gpio_is(bus, timings->ONE_meaningful_max, false)) {
         // wait while bus is high for one recovery
-        if(sdq_slave_wait_while_gpio_is(bus, timings->ONE_recovery, true)) {
-            bus->error = SDQSlaveErrorNone;
-            return true;
+        if(isLastBitofByte) {
+            if(sdq_slave_wait_while_gpio_is(bus, timings->ONE_STOP_recovery, true)) {
+                bus->error = SDQSlaveErrorNone;
+                return true;
+            }
+        } else {
+            if(sdq_slave_wait_while_gpio_is(bus, timings->ONE_recovery, true)) {
+                bus->error = SDQSlaveErrorNone;
+                return true;
+            }
         }
     }
 
@@ -150,9 +157,16 @@ uint8_t sdq_slave_receive_bit(SDQSlave* bus) {
     if(sdq_slave_wait_while_gpio_is(
            bus, timings->ZERO_meaningful_max - timings->ONE_meaningful_max, false)) {
         // wait while bus is high for zero recovery
-        if(sdq_slave_wait_while_gpio_is(bus, timings->ZERO_recovery, true)) {
-            bus->error = SDQSlaveErrorNone;
-            return false;
+        if(isLastBitofByte) {
+            if(sdq_slave_wait_while_gpio_is(bus, timings->ZERO_STOP_recovery, true)) {
+                bus->error = SDQSlaveErrorNone;
+                return false;
+            }
+        } else {
+            if(sdq_slave_wait_while_gpio_is(bus, timings->ZERO_recovery, true)) {
+                bus->error = SDQSlaveErrorNone;
+                return false;
+            }
         }
     }
     bus->error = SDQSlaveErrorInvalidCommand;
@@ -193,20 +207,27 @@ bool sdq_slave_send(SDQSlave* bus, const uint8_t* data, size_t data_size) {
     return true;
 }
 
-bool sdq_slave_receive(SDQSlave* bus, uint8_t* data, size_t data_size) {
+bool sdq_slave_receive(SDQSlave* bus, uint8_t data[], size_t data_size) {
     size_t bytes_received = 0;
     for(; bytes_received < data_size; ++bytes_received) {
         uint8_t value = 0;
+        bool isLastBit = false;
         for(uint8_t bit_mask = 0x01; bit_mask != 0; bit_mask <<= 1) {
-            if(sdq_slave_receive_bit(bus)) {
-                if(bus->error == SDQSlaveErrorNone) {
-                    value |= bit_mask;
-                }
+            isLastBit = (bit_mask == 0x80);
+            if(sdq_slave_receive_bit(bus, isLastBit) && bus->error == SDQSlaveErrorNone) {
+                value |= bit_mask;
             }
         }
         data[bytes_received] = value;
     }
-    if(data[data_size - 1] != crc_data(data, data_size)) {
+    // Check CRC8
+    uint8_t received_crc = data[data_size - 1];
+    uint8_t reduced_data[data_size - 1];
+    for(size_t i = 0; i < data_size - 1; ++i) {
+        reduced_data[i] = data[i];
+    }
+    uint8_t calculated_crc = crc_data(reduced_data, sizeof(reduced_data));
+    if(received_crc != calculated_crc) {
         bus->error = SDQSlaveErrorInvalidCommand;
         return false;
     }
