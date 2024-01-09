@@ -18,7 +18,7 @@ const SDQTimings sdq_timings = { // microseconds
     .BREAK_meaningful_min = 12,
     .BREAK_meaningful_max = 16,
     .BREAK_meaningful = 14,
-    .BREAK_recovery = 4,
+    .BREAK_recovery = 5,
     .WAKE_meaningful_min = 22,
     .WAKE_meaningful_max = 27,
     .WAKE_meaningful = 24,
@@ -26,11 +26,11 @@ const SDQTimings sdq_timings = { // microseconds
     .ZERO_meaningful_min = 6,
     .ZERO_meaningful_max = 8,
     .ZERO_meaningful = 7,
-    .ZERO_recovery = 3,
+    .ZERO_recovery = 4,
     .ONE_meaningful_min = 1,
     .ONE_meaningful_max = 3,
     .ONE_meaningful = 2,
-    .ONE_recovery = 8,
+    .ONE_recovery = 9,
     .ZERO_STOP_recovery = 16,
     .ONE_STOP_recovery = 21};
 
@@ -41,9 +41,14 @@ uint8_t crc_data(const uint8_t* data, size_t len) {
     return crc;
 }
 
+static void result_callback() {
+    FURI_LOG_I("YURI", "From Result Callback");
+}
+
 struct SDQSlave* sdq_slave_alloc(const GpioPin* gpio_pin) {
     struct SDQSlave* bus = malloc(sizeof(struct SDQSlave));
     bus->gpio_pin = gpio_pin;
+    bus->result_callback = result_callback;
     bus->timings = sdq_timings;
     bus->error = SDQSlaveErrorNone;
     return bus;
@@ -68,42 +73,38 @@ static bool sdq_slave_wait_while_gpio_is(SDQSlave* bus, uint32_t time_us, const 
 }
 
 static inline bool sdq_slave_receive_and_process_command(SDQSlave* bus) {
-    if(bus->error == SDQSlaveErrorResetInProgress) {
-        uint8_t command;
-        if(sdq_slave_receive(bus, &command, sizeof(command))) {
-            furi_assert(bus->command_callback);
-            if(bus->command_callback(command, bus->command_callback_context)) {
-                return true;
-            }
+    u_int8_t command;
+    if(sdq_slave_receive(bus, &command, sizeof(command))) {
+        furi_assert(bus->command_callback);
+        if(bus->command_callback(command, bus->command_callback_context)) {
+            return true;
         }
-        return (bus->error == SDQSlaveErrorResetInProgress);
     }
-    return false;
+    return (bus->error == SDQSlaveErrorResetInProgress);
 }
 
 static inline bool sdq_slave_bus_start(SDQSlave* bus) {
-    furi_hal_gpio_init(bus->gpio_pin, GpioModeOutputOpenDrain, GpioPullUp, GpioSpeedLow);
+    //furi_hal_gpio_init(bus->gpio_pin, GpioModeOutputOpenDrain, GpioPullUp, GpioSpeedVeryHigh);
     while(sdq_slave_receive_and_process_command(bus))
         ;
     const bool result = (bus->error == SDQSlaveErrorNone);
-    furi_hal_gpio_init(bus->gpio_pin, GpioModeInterruptRiseFall, GpioPullUp, GpioSpeedLow);
+    //furi_hal_gpio_init(bus->gpio_pin, GpioModeInterruptRiseFall, GpioPullUp, GpioSpeedVeryHigh);
     return result;
 }
 
 static void sdq_slave_exti_callback(void* context) {
     SDQSlave* sdq_slave = context;
     const volatile bool input_state = furi_hal_gpio_read(sdq_slave->gpio_pin);
-    if (!input_state) {
-        SDQTimings timings = sdq_slave->timings;
-
-        if (sdq_slave_wait_while_gpio_is(sdq_slave, timings.BREAK_meaningful, false)) {
-            if (sdq_slave_wait_while_gpio_is(sdq_slave, timings.BREAK_recovery, true)) {
-                const bool result = sdq_slave_bus_start(sdq_slave);
-                if(result && sdq_slave->result_callback != NULL) {
-                    sdq_slave->result_callback(sdq_slave->result_callback_context);
-                }
-            }
+    static uint32_t pulse_start = 0;
+    if(input_state) {
+        const uint32_t pulse_length =
+            (DWT->CYCCNT - pulse_start) / furi_hal_cortex_instructions_per_microsecond();
+        if((pulse_length >= sdq_slave->timings.BREAK_meaningful_min) &&
+           (pulse_length <= sdq_slave->timings.BREAK_meaningful_max)) {
+            sdq_slave_bus_start(sdq_slave);
         }
+    } else {
+        pulse_start = DWT->CYCCNT;
     }
 }
 
@@ -136,27 +137,24 @@ void sdq_slave_set_result_callback(SDQSlave* bus, SDQSlaveResultCallback result_
 
 uint8_t sdq_slave_receive_bit(SDQSlave* bus) {
     const SDQTimings* timings = &bus->timings;
-
-    // wait while bus is low
-    if (sdq_slave_wait_while_gpio_is(bus, timings->ONE_meaningful, false)) {
-        // wait while bus is high
-        if (!sdq_slave_wait_while_gpio_is(bus, timings->ONE_recovery, true)) {
-            bus->error = SDQSlaveErrorBitReadTiming;
-            return false;
+    // wait while bus is low for one meaningful
+    if(sdq_slave_wait_while_gpio_is(bus, timings->ONE_meaningful_max, false)) {
+        // wait while bus is high for one recovery
+        if(sdq_slave_wait_while_gpio_is(bus, timings->ONE_recovery, true)) {
+            bus->error = SDQSlaveErrorNone;
+            return true;
         }
-        return true;
     }
 
-    // wait while bus is low
-    if (sdq_slave_wait_while_gpio_is(bus, timings->ZERO_meaningful-timings->ONE_meaningful, false)) {
-        // wait while bus is high
-        if (!sdq_slave_wait_while_gpio_is(bus, timings->ZERO_recovery, true)) {
-            bus->error = SDQSlaveErrorBitReadTiming;
+    // wait while bus is low for zero meaningful
+    if(sdq_slave_wait_while_gpio_is(
+           bus, timings->ZERO_meaningful_max - timings->ONE_meaningful_max, false)) {
+        // wait while bus is high for zero recovery
+        if(sdq_slave_wait_while_gpio_is(bus, timings->ZERO_recovery, true)) {
+            bus->error = SDQSlaveErrorNone;
             return false;
         }
-        return true;
     }
-
     bus->error = SDQSlaveErrorInvalidCommand;
     return false;
 }
@@ -164,14 +162,6 @@ uint8_t sdq_slave_receive_bit(SDQSlave* bus) {
 static bool sdq_slave_send_byte(SDQSlave* bus, uint8_t byte) {
     const SDQTimings* timings = &bus->timings;
     for(uint8_t mask = 0x80; mask != 0; mask >>= 1) {
-        if(!sdq_slave_wait_while_gpio_is(bus, timings->BREAK_meaningful_max, false)) {
-            bus->error = SDQSlaveErrorResetInProgress;
-            return false;
-        }
-        if(!sdq_slave_wait_while_gpio_is(bus, timings->WAKE_meaningful_max, true)) {
-            bus->error = SDQSlaveErrorTimeout;
-            return false;
-        }
         uint32_t meaningful_time = (mask & byte) ? timings->ONE_meaningful :
                                                    timings->ZERO_meaningful;
         uint32_t recovery_time = (mask & byte) ? timings->ONE_recovery : timings->ZERO_recovery;
@@ -204,24 +194,19 @@ bool sdq_slave_send(SDQSlave* bus, const uint8_t* data, size_t data_size) {
 }
 
 bool sdq_slave_receive(SDQSlave* bus, uint8_t* data, size_t data_size) {
-    furi_hal_gpio_write(bus->gpio_pin, true);
     size_t bytes_received = 0;
     for(; bytes_received < data_size; ++bytes_received) {
         uint8_t value = 0;
-
         for(uint8_t bit_mask = 0x01; bit_mask != 0; bit_mask <<= 1) {
             if(sdq_slave_receive_bit(bus)) {
-                value |= bit_mask;
+                if(bus->error == SDQSlaveErrorNone) {
+                    value |= bit_mask;
+                }
             }
         }
-
         data[bytes_received] = value;
     }
-    // Receive CRC8
-    uint8_t received_crc = data[data_size - 1];
-    // Check CRC8
-    uint8_t calculated_crc = crc_data(data, data_size);
-    if(received_crc != calculated_crc) {
+    if(data[data_size - 1] != crc_data(data, data_size)) {
         bus->error = SDQSlaveErrorInvalidCommand;
         return false;
     }

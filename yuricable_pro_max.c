@@ -3,7 +3,6 @@
 
 #define TAG "YURICABLE_PRO_MAX"
 #define SDQ_PIN gpio_ext_pa7 // GPIO 2
-
 bool sdq_started = false;
 
 static void demo_input_callback(InputEvent* input_event, FuriMessageQueue* queue) {
@@ -29,6 +28,8 @@ static void demo_render_callback(Canvas* canvas, void* ctx) {
     furi_mutex_release(demo_context->mutex);
 }
 
+
+
 int32_t yuricable_pro_max_app(void* p) {
     UNUSED(p);
     FURI_LOG_I(TAG, "Starting the SDQ Listener on GPIO 2!");
@@ -42,6 +43,7 @@ int32_t yuricable_pro_max_app(void* p) {
     struct SDQSlave* mySDQSlave = sdq_slave_alloc(&SDQ_PIN);
     //  Set ViewPort callbacks
     ViewPort* view_port = view_port_alloc();
+
     view_port_draw_callback_set(view_port, demo_render_callback, demo_context);
     view_port_input_callback_set(view_port, demo_input_callback, demo_context->queue);
     // Open GUI and register view_port

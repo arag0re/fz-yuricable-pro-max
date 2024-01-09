@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CLionExternalBuildManager">
+    <target id="f7b03880-1bdb-4559-81b1-8ded98c7583b" name="yuricable.elf" defaultType="TOOL">
+      <configuration id="5b68f1e9-280f-47e0-aade-ea63a70a9dbf" name="yuricable.elf">
+        <build type="TOOL">
+          <tool actionId="Tool_External Tools_UFBT" />
+        </build>
+        <clean type="TOOL">
+          <tool actionId="Tool_External Tools_UFBT" />
+        </clean>
+      </configuration>
+    </target>
+    <target id="5ad7c405-3412-4114-adfa-15120e15728d" name="firmware" defaultType="TOOL">
+      <configuration id="b15d7faa-0321-4b4a-b239-dc898053439c" name="firmware" />
+    </target>
+  </component>
+</project>
