@@ -26,3 +26,13 @@ enum TRISTAR_REQUESTS {
     TRISTAR_POWER = 0x70,
     TRISTAR_UNKNOWN_76 = 0x76,
 };
+
+typedef struct {
+    uint8_t DFU[7];
+    uint8_t RESET_DEVICE[7];
+    uint8_t USB_UART_JTAG[7];
+    uint8_t USB_SPAM_JTAG[7];
+    uint8_t USB_UART[7];
+    uint8_t USB_A_CHARGING_CABLE[7];
+} TRISTART_RESPONSES;
+
