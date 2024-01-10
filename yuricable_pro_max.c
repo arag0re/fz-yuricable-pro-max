@@ -13,22 +13,19 @@ static void demo_input_callback(InputEvent* input_event, FuriMessageQueue* queue
 
 static void demo_render_callback(Canvas* canvas, void* ctx) {
     DemoContext* demo_context = ctx;
-    if(furi_mutex_acquire(demo_context->mutex, 200) != FuriStatusOk) {
+    if (furi_mutex_acquire(demo_context->mutex, 200) != FuriStatusOk) {
         return;
     }
     DemoData* data = demo_context->data;
     canvas_set_font(canvas, FontPrimary);
-    if(sdq_started) {
+    if (sdq_started) {
         furi_string_printf(data->buffer, "SDQ Slave Active");
     } else {
         furi_string_printf(data->buffer, "SDQ Slave Inactive");
     }
-    canvas_draw_str_aligned(
-        canvas, 10, 20, AlignLeft, AlignTop, furi_string_get_cstr(data->buffer));
+    canvas_draw_str_aligned(canvas, 10, 20, AlignLeft, AlignTop, furi_string_get_cstr(data->buffer));
     furi_mutex_release(demo_context->mutex);
 }
-
-
 
 int32_t yuricable_pro_max_app(void* p) {
     UNUSED(p);
@@ -53,17 +50,17 @@ int32_t yuricable_pro_max_app(void* p) {
     Event event;
     bool processing = true;
     do {
-        if(furi_message_queue_get(demo_context->queue, &event, 1000) == FuriStatusOk) {
+        if (furi_message_queue_get(demo_context->queue, &event, 1000) == FuriStatusOk) {
             FURI_LOG_T(TAG, "Got event type: %d", event.type);
-            switch(event.type) {
+            switch (event.type) {
             case EventTypeKey:
                 // Short press of back button exits the program.
-                if(event.input.type == InputTypeShort && event.input.key == InputKeyBack) {
+                if (event.input.type == InputTypeShort && event.input.key == InputKeyBack) {
                     FURI_LOG_I(TAG, "Short-Back pressed. Exiting program.");
                     processing = false;
-                } else if(event.input.type == InputTypeShort && event.input.key == InputKeyOk) {
+                } else if (event.input.type == InputTypeShort && event.input.key == InputKeyOk) {
                     FURI_LOG_I(TAG, "Pressed Enter Key");
-                    if(!sdq_started) {
+                    if (!sdq_started) {
                         sdq_slave_start(mySDQSlave);
                         sdq_started = true;
                         view_port_update(view_port);
@@ -80,7 +77,7 @@ int32_t yuricable_pro_max_app(void* p) {
                 break;
             }
         }
-    } while(processing);
+    } while (processing);
     sdq_slave_free(mySDQSlave);
     furi_hal_gpio_init(&SDQ_PIN, GpioModeOutputOpenDrain, GpioPullNo, GpioSpeedLow);
     furi_hal_gpio_write(&SDQ_PIN, true);
