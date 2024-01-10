@@ -75,10 +75,8 @@ static inline bool sdq_slave_receive_and_process_command(SDQSlave* bus) {
         switch (command[0]) {
         case TRISTAR_POLL:
             if (sdq_slave_wait_while_gpio_is(bus, bus->timings.BREAK_meaningful_max, false)) {
-                if (sdq_slave_wait_while_gpio_is(bus, bus->timings.BREAK_recovery, true)) {
-                    if (sdq_slave_send(bus, RESET, sizeof(RESET))) {
-                        FURI_LOG_I("SDQ", "SENT COMMAND BYTES");
-                    }
+                if (sdq_slave_send(bus, RESET_DEVICE, sizeof(RESET_DEVICE))) {
+                    FURI_LOG_I("SDQ", "SENT COMMAND BYTES");
                 }
             }
             break;
@@ -91,10 +89,12 @@ static inline bool sdq_slave_receive_and_process_command(SDQSlave* bus) {
         default:
             break;
         }
+        /*
         furi_assert(bus->command_callback);
         if (bus->command_callback(command, bus->command_callback_context)) {
             return true;
         }
+        */
     }
     return (bus->error == SDQSlaveErrorResetInProgress);
 }
@@ -106,28 +106,26 @@ static inline bool sdq_slave_bus_start(SDQSlave* bus) {
     while (sdq_slave_receive_and_process_command(bus))
         ;
     const bool result = (bus->error == SDQSlaveErrorNone);
-    furi_hal_gpio_init(bus->gpio_pin, GpioModeInterruptRiseFall, GpioPullNo, GpioSpeedLow);
+    //furi_hal_gpio_init(bus->gpio_pin, GpioModeInterruptRiseFall, GpioPullNo, GpioSpeedLow);
     FURI_CRITICAL_EXIT();
     return result;
 }
 
 static void sdq_slave_exti_callback(void* context) {
     SDQSlave* bus = context;
-    const volatile bool input_state = furi_hal_gpio_read(bus->gpio_pin);
-    if (input_state) {
-        furi_hal_gpio_init(bus->gpio_pin, GpioModeOutputOpenDrain, GpioPullNo, GpioSpeedLow);
-        if (sdq_slave_wait_while_gpio_is(bus, bus->timings.BREAK_meaningful_max - 8, false)) {
-            if (sdq_slave_wait_while_gpio_is(bus, bus->timings.BREAK_recovery, true)) {
-                sdq_slave_bus_start(bus);
-            }
+    furi_hal_gpio_init(bus->gpio_pin, GpioModeOutputOpenDrain, GpioPullUp, GpioSpeedLow);
+    if (sdq_slave_wait_while_gpio_is(bus, bus->timings.BREAK_meaningful_max - 8, false)) {
+        if (sdq_slave_wait_while_gpio_is(bus, bus->timings.BREAK_recovery + 1, true)) {
+            sdq_slave_bus_start(bus);
         }
     }
+    furi_hal_gpio_init(bus->gpio_pin, GpioModeInterruptFall, GpioPullUp, GpioSpeedLow);
 }
 
 void sdq_slave_start(SDQSlave* bus) {
     furi_hal_gpio_add_int_callback(bus->gpio_pin, sdq_slave_exti_callback, bus);
     furi_hal_gpio_write(bus->gpio_pin, true);
-    furi_hal_gpio_init(bus->gpio_pin, GpioModeInterruptRiseFall, GpioPullUp, GpioSpeedVeryHigh);
+    furi_hal_gpio_init(bus->gpio_pin, GpioModeInterruptFall, GpioPullUp, GpioSpeedVeryHigh);
 }
 
 void sdq_slave_stop(SDQSlave* bus) {
@@ -189,22 +187,24 @@ uint8_t sdq_slave_receive_bit(SDQSlave* bus, bool isLastBitofByte) {
 
 static bool sdq_slave_send_byte(SDQSlave* bus, uint8_t byte) {
     const SDQTimings* timings = &bus->timings;
-    for (uint8_t mask = 0x80; mask != 0; mask >>= 1) {
+    for (uint8_t mask = 0x01; mask != 0; mask <<= 1) {
         uint32_t meaningful_time = (mask & byte) ? timings->ONE_meaningful : timings->ZERO_meaningful;
         uint32_t recovery_time = (mask & byte) ? timings->ONE_recovery : timings->ZERO_recovery;
         furi_hal_gpio_write(bus->gpio_pin, false);
-        furi_delay_us(meaningful_time);
+        furi_delay_us(meaningful_time - 1);
         furi_hal_gpio_write(bus->gpio_pin, true);
         // Add stop recovery time for the last bit in the byte
-        if (mask == 0x01) {
+        if (mask == 0x80) {
             recovery_time = (mask & byte) ? timings->ONE_STOP_recovery : timings->ZERO_STOP_recovery;
         }
-        furi_delay_us(recovery_time);
+        furi_delay_us(recovery_time - 1);
     }
     return true;
 }
 
 bool sdq_slave_send(SDQSlave* bus, const uint8_t data[], size_t data_size) {
+    const SDQTimings* timings = &bus->timings;
+
     for (size_t i = 0; i < data_size; ++i) {
         if (!sdq_slave_send_byte(bus, data[i])) {
             return false;
@@ -215,6 +215,13 @@ bool sdq_slave_send(SDQSlave* bus, const uint8_t data[], size_t data_size) {
     if (!sdq_slave_send_byte(bus, crc)) {
         return false;
     }
+
+    // Send Break
+    furi_hal_gpio_write(bus->gpio_pin, false);
+    furi_delay_us(timings->BREAK_meaningful - 1);
+    furi_hal_gpio_write(bus->gpio_pin, true);
+    furi_delay_us(timings->BREAK_recovery - 1);
+
     return true;
 }
 
