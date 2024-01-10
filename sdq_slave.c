@@ -101,13 +101,13 @@ static inline bool sdq_slave_receive_and_process_command(SDQSlave* bus) {
 
 static inline bool sdq_slave_bus_start(SDQSlave* bus) {
     FURI_CRITICAL_ENTER();
-    //const uint32_t start = DWT->CYCCNT;
-    //furi_hal_gpio_init(bus->gpio_pin, GpioModeOutputOpenDrain, GpioPullNo, GpioSpeedLow);
-    //const uint32_t time_spent =
-    //    (DWT->CYCCNT - start) / furi_hal_cortex_instructions_per_microsecond();
-    //if(time_spent){
-    //    return false;
-    //}
+    const uint32_t start = DWT->CYCCNT;
+    furi_hal_gpio_init(bus->gpio_pin, GpioModeOutputOpenDrain, GpioPullNo, GpioSpeedLow);
+    const uint32_t time_spent = (DWT->CYCCNT - start);
+    const uint32_t i_per_micro = furi_hal_cortex_instructions_per_microsecond();
+    if (time_spent && i_per_micro) {
+        return false;
+    }
     while(sdq_slave_receive_and_process_command(bus))
         ;
     const bool result = (bus->error == SDQSlaveErrorNone);
