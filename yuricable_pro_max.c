@@ -1,4 +1,4 @@
-#include <sdq_slave.h>
+#include <sdq_device.h>
 #include <yuricable_pro_max_structs.c>
 
 #define TAG "YURICABLE_PRO_MAX"
@@ -19,9 +19,9 @@ static void demo_render_callback(Canvas* canvas, void* ctx) {
     DemoData* data = demo_context->data;
     canvas_set_font(canvas, FontPrimary);
     if (sdq_started) {
-        furi_string_printf(data->buffer, "SDQ Slave Active");
+        furi_string_printf(data->buffer, "SDQ Device Active");
     } else {
-        furi_string_printf(data->buffer, "SDQ Slave Inactive");
+        furi_string_printf(data->buffer, "SDQ Device Inactive");
     }
     canvas_draw_str_aligned(canvas, 10, 20, AlignLeft, AlignTop, furi_string_get_cstr(data->buffer));
     furi_mutex_release(demo_context->mutex);
@@ -37,7 +37,7 @@ int32_t yuricable_pro_max_app(void* p) {
     demo_context->data->buffer = furi_string_alloc();
     // Queue for events (tick or input)
     demo_context->queue = furi_message_queue_alloc(8, sizeof(Event));
-    struct SDQSlave* mySDQSlave = sdq_slave_alloc(&SDQ_PIN);
+    struct SDQDevice* mySDQDevice = sdq_device_alloc(&SDQ_PIN);
     //  Set ViewPort callbacks
     ViewPort* view_port = view_port_alloc();
 
@@ -61,15 +61,15 @@ int32_t yuricable_pro_max_app(void* p) {
                 } else if (event.input.type == InputTypeShort && event.input.key == InputKeyOk) {
                     FURI_LOG_I(TAG, "Pressed Enter Key");
                     if (!sdq_started) {
-                        sdq_slave_start(mySDQSlave);
+                        sdq_device_start(mySDQDevice);
                         sdq_started = true;
                         view_port_update(view_port);
-                        FURI_LOG_I(TAG, "SDQ Slave started");
+                        FURI_LOG_I(TAG, "SDQ Device started");
                     } else {
-                        sdq_slave_stop(mySDQSlave);
+                        sdq_device_stop(mySDQDevice);
                         sdq_started = false;
                         view_port_update(view_port);
-                        FURI_LOG_I(TAG, "SDQ Slave stopped");
+                        FURI_LOG_I(TAG, "SDQ Device stopped");
                     }
                 }
                 break;
@@ -78,7 +78,7 @@ int32_t yuricable_pro_max_app(void* p) {
             }
         }
     } while (processing);
-    sdq_slave_free(mySDQSlave);
+    sdq_device_free(mySDQDevice);
     furi_hal_gpio_init(&SDQ_PIN, GpioModeOutputOpenDrain, GpioPullNo, GpioSpeedLow);
     furi_hal_gpio_write(&SDQ_PIN, true);
     view_port_enabled_set(view_port, false);
