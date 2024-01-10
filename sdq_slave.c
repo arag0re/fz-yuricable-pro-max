@@ -13,9 +13,6 @@ struct SDQSlave {
     void* command_callback_context;
 };
 
-uint8_t RESET_DEVICE[7] = {0x75, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00};
-uint8_t DFU[7] = {0x75, 0x20, 0x00, 0x02, 0x00, 0x00, 0x00};
-
 const SDQTimings sdq_timings = { // microseconds
     .BREAK_meaningful_min = 12,
     .BREAK_meaningful_max = 16,
@@ -35,6 +32,15 @@ const SDQTimings sdq_timings = { // microseconds
     .ONE_recovery = 9,
     .ZERO_STOP_recovery = 16,
     .ONE_STOP_recovery = 21};
+
+const TRISTART_RESPONSES responses = {
+    .RESET_DEVICE = {0x75, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00},
+    .DFU = {0x75, 0x20, 0x00, 0x02, 0x00, 0x00, 0x00},
+    .USB_UART_JTAG = {0x75, 0xa0, 0x00, 0x00, 0x00, 0x00, 0x00},
+    .USB_SPAM_JTAG = {0x75, 0xa0, 0x08, 0x10, 0x00, 0x00, 0x00},
+    .USB_UART = {0x75, 0x20, 0x00, 0x10, 0x00, 0x00, 0x00},
+    .USB_A_CHARGING_CABLE = {0x75, 0x10, 0x0c, 0x00, 0x00, 0x00, 0x00},
+};
 
 uint8_t crc_data(const uint8_t* data, size_t len) {
     crc_t crc = crc_init();
@@ -71,12 +77,20 @@ static bool sdq_slave_wait_while_gpio_is(SDQSlave* bus, uint32_t time_us, const 
 
 static inline bool sdq_slave_receive_and_process_command(SDQSlave* bus) {
     uint8_t command[4] = {0};
+    bool wasReset = false;
     if (sdq_slave_receive(bus, command, sizeof(command))) {
         switch (command[0]) {
         case TRISTAR_POLL:
             if (sdq_slave_wait_while_gpio_is(bus, bus->timings.BREAK_meaningful_max, false)) {
-                if (sdq_slave_send(bus, RESET_DEVICE, sizeof(RESET_DEVICE))) {
-                    FURI_LOG_I("SDQ", "SENT COMMAND BYTES");
+                if (wasReset) {
+                    if (sdq_slave_send(bus, responses.DFU, sizeof(responses.DFU))) {
+                        FURI_LOG_I("SDQ", "SHOULD BE DFU NOW");
+                    }
+                } else {
+                    if (sdq_slave_send(bus, responses.RESET_DEVICE, sizeof(responses.RESET_DEVICE))) {
+                        wasReset = true;
+                        //FURI_LOG_I("SDQ", "SENT COMMAND BYTES");
+                    }
                 }
             }
             break;
