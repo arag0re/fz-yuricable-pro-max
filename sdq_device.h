@@ -10,6 +10,31 @@
 extern "C" {
 #endif
 
+enum TRISTAR_REQUESTS {
+    TRISTAR_POLL = 0x74,
+    TRISTAR_POWER = 0x70,
+    TRISTAR_UNKNOWN_76 = 0x76,
+};
+
+typedef struct {
+    uint8_t DFU[7];
+    uint8_t RESET_DEVICE[7];
+    uint8_t USB_UART_JTAG[7];
+    uint8_t USB_SPAM_JTAG[7];
+    uint8_t USB_UART[7];
+    uint8_t USB_A_CHARGING_CABLE[7];
+} TRISTART_RESPONSES;
+
+typedef enum {
+    SDQDeviceCommand_NONE = 0,
+    SDQDeviceCommand_DFU,
+    SDQDeviceCommand_RESET_DEVICE,
+    SDQDeviceCommand_USB_UART_JTAG,
+    SDQDeviceCommand_USB_SPAM_JTAG,
+    SDQDeviceCommand_USB_UART,
+    SDQDeviceCommand_USB_A_CHARGING_CABLE,
+} SDQDeviceCommand;
+
 typedef struct {
     uint32_t BREAK_meaningful_min;
     uint32_t BREAK_meaningful_max;
@@ -31,11 +56,10 @@ typedef struct {
     uint32_t ONE_STOP_recovery;
 } SDQTimings;
 
-extern const SDQTimings sdq_timings;
 typedef enum {
     SDQDeviceErrorNone = 0,
     SDQDeviceErrorResetInProgress,
-    SDQDeviceErrorPresenceConflict,
+    SDQDeviceErrorNotConnected,
     SDQDeviceErrorInvalidCommand,
     SDQDeviceErrorBitReadTiming,
     SDQDeviceErrorTimeout,
@@ -44,6 +68,20 @@ typedef enum {
 typedef struct SDQDevice SDQDevice;
 
 typedef bool (*SDQDeviceCommandCallback)(uint8_t* command, void* context);
+
+struct SDQDevice {
+    const GpioPin* gpio_pin;
+    SDQTimings timings;
+    SDQDeviceError error;
+    SDQDeviceCommand runCommand;
+    bool listening;
+    bool connected;
+
+    const FuriMessageQueue* eventQueue;
+
+    SDQDeviceCommandCallback command_callback;
+    void* command_callback_context;
+};
 
 struct SDQDevice* sdq_device_alloc(const GpioPin* gpio_pin);
 void sdq_device_free(SDQDevice* bus);

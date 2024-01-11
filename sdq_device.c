@@ -1,15 +1,6 @@
 #include <sdq_device.h>
 #include <yuricable_pro_max_structs.c>
 
-struct SDQDevice {
-    const GpioPin* gpio_pin;
-    SDQTimings timings;
-    SDQDeviceError error;
-
-    SDQDeviceCommandCallback command_callback;
-    void* command_callback_context;
-};
-
 const SDQTimings sdq_timings = { // microseconds
     .BREAK_meaningful_min = 12,
     .BREAK_meaningful_max = 16,
@@ -51,6 +42,7 @@ struct SDQDevice* sdq_device_alloc(const GpioPin* gpio_pin) {
     bus->gpio_pin = gpio_pin;
     bus->timings = sdq_timings;
     bus->error = SDQDeviceErrorNone;
+    bus->runCommand = SDQDeviceCommand_NONE;
     return bus;
 }
 
@@ -74,20 +66,49 @@ static bool sdq_device_wait_while_gpio_is(SDQDevice* bus, uint32_t time_us, cons
 
 static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
     uint8_t command[4] = {0};
-    bool wasReset = false;
     if (sdq_device_receive(bus, command, sizeof(command))) {
         switch (command[0]) {
         case TRISTAR_POLL:
             if (sdq_device_wait_while_gpio_is(bus, bus->timings.BREAK_meaningful_max, false)) {
-                if (wasReset) {
-                    if (sdq_device_send(bus, responses.DFU, sizeof(responses.DFU))) {
-                        FURI_LOG_I("SDQ", "SHOULD BE DFU NOW");
+                switch (bus->runCommand) {
+                case SDQDeviceCommand_NONE:
+                    if (bus->command_callback) {
+                        if (bus->command_callback(command, bus->command_callback_context)) {
+                            FURI_LOG_I("SDQ", "RUN COMMAND CALLBACK");
+                        }
                     }
-                } else {
+                    break;
+                case SDQDeviceCommand_RESET_DEVICE:
                     if (sdq_device_send(bus, responses.RESET_DEVICE, sizeof(responses.RESET_DEVICE))) {
-                        wasReset = true;
-                        //FURI_LOG_I("SDQ", "SENT COMMAND BYTES");
+                        FURI_LOG_I("SDQ", "SENT RESET COMMAND");
                     }
+                    break;
+                case SDQDeviceCommand_DFU:
+                    if (bus->error == SDQDeviceErrorResetInProgress) {
+                        if (sdq_device_send(bus, responses.DFU, sizeof(responses.DFU))) {
+                            FURI_LOG_I("SDQ", "SHOULD BE DFU NOW");
+                        }
+                    } else {
+                        if (sdq_device_send(bus, responses.RESET_DEVICE, sizeof(responses.RESET_DEVICE))) {
+                            bus->error = SDQDeviceErrorResetInProgress;
+                            FURI_LOG_I("SDQ", "SENT RESET COMMAND");
+                        }
+                    }
+                    break;
+                case SDQDeviceCommand_USB_UART_JTAG:
+                    break;
+                case SDQDeviceCommand_USB_SPAM_JTAG:
+                    break;
+                case SDQDeviceCommand_USB_UART:
+                    if (sdq_device_send(bus, responses.USB_UART, sizeof(responses.USB_UART))) {
+                        FURI_LOG_I("SDQ", "SENT UART COMMAND");
+                    }
+                    break;
+                case SDQDeviceCommand_USB_A_CHARGING_CABLE:
+                    if (sdq_device_send(bus, responses.USB_A_CHARGING_CABLE, sizeof(responses.USB_A_CHARGING_CABLE))) {
+                        FURI_LOG_I("SDQ", "SENT CHARGING COMMAND");
+                    }
+                    break;
                 }
             }
             break;
@@ -100,24 +121,17 @@ static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
         default:
             break;
         }
-        /*
-        furi_assert(bus->command_callback);
-        if (bus->command_callback(command, bus->command_callback_context)) {
-            return true;
-        }
-        */
     }
     return (bus->error == SDQDeviceErrorResetInProgress);
 }
 
 static inline bool sdq_device_bus_start(SDQDevice* bus) {
     FURI_CRITICAL_ENTER();
-    // Move before BREAK detection
-    // furi_hal_gpio_init(bus->gpio_pin, GpioModeOutputOpenDrain, GpioPullNo, GpioSpeedLow);
+    bus->connected = true;
     while (sdq_device_receive_and_process_command(bus))
         ;
     const bool result = (bus->error == SDQDeviceErrorNone);
-    //furi_hal_gpio_init(bus->gpio_pin, GpioModeInterruptRiseFall, GpioPullNo, GpioSpeedLow);
+    bus->connected = false;
     FURI_CRITICAL_EXIT();
     return result;
 }
@@ -137,9 +151,11 @@ void sdq_device_start(SDQDevice* bus) {
     furi_hal_gpio_add_int_callback(bus->gpio_pin, sdq_device_exti_callback, bus);
     furi_hal_gpio_write(bus->gpio_pin, true);
     furi_hal_gpio_init(bus->gpio_pin, GpioModeInterruptFall, GpioPullUp, GpioSpeedVeryHigh);
+    bus->listening = true;
 }
 
 void sdq_device_stop(SDQDevice* bus) {
+    bus->listening = false;
     furi_hal_gpio_write(bus->gpio_pin, true);
     furi_hal_gpio_init(bus->gpio_pin, GpioModeAnalog, GpioPullNo, GpioSpeedVeryHigh);
     furi_hal_gpio_remove_int_callback(bus->gpio_pin);
@@ -204,6 +220,11 @@ static void sdq_device_send_byte(SDQDevice* bus, uint8_t byte) {
 
 bool sdq_device_send(SDQDevice* bus, const uint8_t data[], size_t data_size) {
     const SDQTimings* timings = &bus->timings;
+
+    if (!bus->connected) {
+        bus->error = SDQDeviceErrorNotConnected;
+        return false;
+    }
 
     for (size_t i = 0; i < data_size; ++i) {
         sdq_device_send_byte(bus, data[i]);

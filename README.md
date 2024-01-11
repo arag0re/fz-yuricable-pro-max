@@ -34,6 +34,10 @@ Female Port Pinout
 
 ![](docs/Connector2.jpg)
 
+USB UART Pinout
+
+![](docs/Connector1.jpg)
+
 ## Build
 
 ### Build-Tool
