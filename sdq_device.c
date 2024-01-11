@@ -72,16 +72,6 @@ static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
             if (sdq_device_wait_while_gpio_is(bus, bus->timings.BREAK_meaningful_max, false)) {
                 switch (bus->runCommand) {
                 case SDQDeviceCommand_NONE:
-                    if (bus->command_callback) {
-                        if (bus->command_callback(command, bus->command_callback_context)) {
-                            FURI_LOG_I("SDQ", "RUN COMMAND CALLBACK");
-                        }
-                    }
-                    break;
-                case SDQDeviceCommand_RESET_DEVICE:
-                    if (sdq_device_send(bus, responses.RESET_DEVICE, sizeof(responses.RESET_DEVICE))) {
-                        FURI_LOG_I("SDQ", "SENT RESET COMMAND");
-                    }
                     break;
                 case SDQDeviceCommand_DFU:
                     if (bus->error == SDQDeviceErrorResetInProgress) {
@@ -95,19 +85,27 @@ static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
                         }
                     }
                     break;
-                case SDQDeviceCommand_USB_UART_JTAG:
-                    break;
-                case SDQDeviceCommand_USB_SPAM_JTAG:
-                    break;
-                case SDQDeviceCommand_USB_UART:
-                    if (sdq_device_send(bus, responses.USB_UART, sizeof(responses.USB_UART))) {
-                        FURI_LOG_I("SDQ", "SENT UART COMMAND");
+                case SDQDeviceCommand_DCSD:
+                    if (bus->resetInProgress) {
+                        if (sdq_device_send(bus, responses.USB_UART, sizeof(responses.USB_UART))) {
+                            bus->resetInProgress = false;
+                            FURI_LOG_I("SDQ", "SHOULD BE DFU NOW");
+                        }
+                    } else {
+                        if (sdq_device_send(bus, responses.RESET_DEVICE, sizeof(responses.RESET_DEVICE))) {
+                            bus->resetInProgress = true;
+                            FURI_LOG_I("SDQ", "SENT RESET COMMAND");
+                        }
                     }
                     break;
                 case SDQDeviceCommand_USB_A_CHARGING_CABLE:
                     if (sdq_device_send(bus, responses.USB_A_CHARGING_CABLE, sizeof(responses.USB_A_CHARGING_CABLE))) {
                         FURI_LOG_I("SDQ", "SENT CHARGING COMMAND");
                     }
+                    break;
+                case SDQDeviceCommand_JTAG:
+                    break;
+                case SDQDeviceCommand_RECOVERY:
                     break;
                 }
             }

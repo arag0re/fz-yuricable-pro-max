@@ -27,11 +27,10 @@ typedef struct {
 
 typedef enum {
     SDQDeviceCommand_NONE = 0,
+    SDQDeviceCommand_DCSD,
+    SDQDeviceCommand_JTAG,
     SDQDeviceCommand_DFU,
-    SDQDeviceCommand_RESET_DEVICE,
-    SDQDeviceCommand_USB_UART_JTAG,
-    SDQDeviceCommand_USB_SPAM_JTAG,
-    SDQDeviceCommand_USB_UART,
+    SDQDeviceCommand_RECOVERY,
     SDQDeviceCommand_USB_A_CHARGING_CABLE,
 } SDQDeviceCommand;
 
@@ -76,6 +75,7 @@ struct SDQDevice {
     SDQDeviceCommand runCommand;
     bool listening;
     bool connected;
+    bool resetInProgress;
 
     const FuriMessageQueue* eventQueue;
 
