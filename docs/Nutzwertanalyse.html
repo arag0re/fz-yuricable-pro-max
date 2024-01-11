@@ -1,0 +1,459 @@
+<html><script type="text/javascript" async="" src="Nutzwertanalyse_files/google-analytics_ga.js"></script><script>
+    window[Symbol.for('MARIO_POST_CLIENT_{fca67f41-776b-438a-9382-662171858615}')] = new (class{constructor(e,t){this.name=e,this.destination=t,this.serverListeners={},this.bgRequestsListeners={},this.bgEventsListeners={},window.addEventListener("message",(e=>{const t=e.data,s=!(t.destination&&t.destination===this.name),n=!t.event;if(!s&&!n)if("MARIO_POST_SERVER__BG_RESPONSE"===t.event){const e=t.args;if(this.hasBgRequestListener(e.requestId)){try{this.bgRequestsListeners[e.requestId](e.response)}catch(e){}delete this.bgRequestsListeners[e.requestId]}}else if("MARIO_POST_SERVER__BG_EVENT"===t.event){const e=t.args;if(this.hasBgEventListener(e.event))try{this.bgEventsListeners[t.id](e.payload)}catch(e){}}else if(this.hasServerListener(t.event))try{this.serverListeners[t.event](t.args)}catch(e){}}))}emitToServer(e,t){const s=this.generateUIID(),n={args:t,destination:this.destination,event:e,id:s};return window.postMessage(n,location.origin),s}emitToBg(e,t){const s=this.generateUIID(),n={bgEventName:e,requestId:s,args:t};return this.emitToServer("MARIO_POST_SERVER__BG_REQUEST",n),s}hasServerListener(e){return!!this.serverListeners[e]}hasBgRequestListener(e){return!!this.bgRequestsListeners[e]}hasBgEventListener(e){return!!this.bgEventsListeners[e]}fromServerEvent(e,t){this.serverListeners[e]=t}fromBgEvent(e,t){this.bgEventsListeners[e]=t}fromBgResponse(e,t){this.bgRequestsListeners[e]=t}generateUIID(){return"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,(function(e){const t=16*Math.random()|0;return("x"===e?t:3&t|8).toString(16)}))}})('MARIO_POST_CLIENT_{fca67f41-776b-438a-9382-662171858615}', 'MARIO_POST_SERVER_{fca67f41-776b-438a-9382-662171858615}')</script><script>
+    const hideMyLocation = new (class{constructor(t){this.clientKey=t,this.watchIDs={},this.client=window[Symbol.for(t)];const e=navigator.geolocation.getCurrentPosition,o=navigator.geolocation.watchPosition,n=navigator.geolocation.clearWatch,i=this;navigator.geolocation.getCurrentPosition=function(t,o,n){i.handle(e,"GET",t,o,n)},navigator.geolocation.watchPosition=function(t,e,n){return i.handle(o,"WATCH",t,e,n)},navigator.geolocation.clearWatch=function(t){if(-1===t)return;const e=i.watchIDs[t];return delete i.watchIDs[t],n.apply(this,[e])}}handle(t,e,o,n,i){const a=this.client.emitToBg("HIDE_MY_LOCATION__GET_LOCATION");let r=this.getRandomInt(0,1e5);if(this.client.fromBgResponse(a,(a=>{if(a.enabled)if("SUCCESS"===a.status){const t=this.map(a);o(t)}else{const t=this.errorObj();n(t),r=-1}else{const a=[o,n,i],c=t.apply(navigator.geolocation,a);"WATCH"===e&&(this.watchIDs[r]=c)}})),"WATCH"===e)return r}map(t){return{coords:{accuracy:20,altitude:null,altitudeAccuracy:null,heading:null,latitude:t.latitude,longitude:t.longitude,speed:null},timestamp:Date.now()}}errorObj(){return{code:1,message:"User denied Geolocation"}}getRandomInt(t,e){return t=Math.ceil(t),e=Math.floor(e),Math.floor(Math.random()*(e-t+1))+t}})('MARIO_POST_CLIENT_{fca67f41-776b-438a-9382-662171858615}')
+  </script><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><style class="darkreader darkreader--fallback" media="screen"></style><style class="darkreader darkreader--text" media="screen"></style><style class="darkreader darkreader--invert" media="screen">.jfk-bubble.gtx-bubble, .captcheck_answer_label > input + img, span#closed_text > img[src^="https://www.gstatic.com/images/branding/googlelogo"], span[data-href^="https://www.hcaptcha.com/"] > #icon, #bit-notification-bar-iframe, ::-webkit-calendar-picker-indicator, img.Wirisformula {
+    filter: invert(100%) hue-rotate(180deg) contrast(90%) !important;
+}</style><style class="darkreader darkreader--inline" media="screen">[data-darkreader-inline-bgcolor] {
+  background-color: var(--darkreader-inline-bgcolor) !important;
+}
+[data-darkreader-inline-bgimage] {
+  background-image: var(--darkreader-inline-bgimage) !important;
+}
+[data-darkreader-inline-border] {
+  border-color: var(--darkreader-inline-border) !important;
+}
+[data-darkreader-inline-border-bottom] {
+  border-bottom-color: var(--darkreader-inline-border-bottom) !important;
+}
+[data-darkreader-inline-border-left] {
+  border-left-color: var(--darkreader-inline-border-left) !important;
+}
+[data-darkreader-inline-border-right] {
+  border-right-color: var(--darkreader-inline-border-right) !important;
+}
+[data-darkreader-inline-border-top] {
+  border-top-color: var(--darkreader-inline-border-top) !important;
+}
+[data-darkreader-inline-boxshadow] {
+  box-shadow: var(--darkreader-inline-boxshadow) !important;
+}
+[data-darkreader-inline-color] {
+  color: var(--darkreader-inline-color) !important;
+}
+[data-darkreader-inline-fill] {
+  fill: var(--darkreader-inline-fill) !important;
+}
+[data-darkreader-inline-stroke] {
+  stroke: var(--darkreader-inline-stroke) !important;
+}
+[data-darkreader-inline-outline] {
+  outline-color: var(--darkreader-inline-outline) !important;
+}
+[data-darkreader-inline-stopcolor] {
+  stop-color: var(--darkreader-inline-stopcolor) !important;
+}</style><style class="darkreader darkreader--variables" media="screen">:root {
+   --darkreader-neutral-background: #131516;
+   --darkreader-neutral-text: #d8d4cf;
+   --darkreader-selection-background: #004daa;
+   --darkreader-selection-text: #e8e6e3;
+}</style><style class="darkreader darkreader--root-vars" media="screen"></style><style class="darkreader darkreader--user-agent" media="screen">html {
+    background-color: #181a1b !important;
+}
+html {
+    color-scheme: dark !important;
+}
+html, body {
+    background-color: #181a1b;
+}
+html, body {
+    border-color: #736b5e;
+    color: #e8e6e3;
+}
+a {
+    color: #3391ff;
+}
+table {
+    border-color: #545b5e;
+}
+::placeholder {
+    color: #b2aba1;
+}
+input:-webkit-autofill,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+    background-color: #404400 !important;
+    color: #e8e6e3 !important;
+}
+::selection {
+    background-color: #004daa !important;
+    color: #e8e6e3 !important;
+}
+::-moz-selection {
+    background-color: #004daa !important;
+    color: #e8e6e3 !important;
+}</style>
+		<title>
+			Nutzwertanalyse online erstellen
+		</title>
+		<style type="text/css">
+			body {
+				font-family: arial, verdana, times;
+			}
+			span {
+				font-size: 12pt;
+			}
+		</style><style class="darkreader darkreader--sync" media="screen"></style>
+
+		<meta name="keywords" lang="de" content="Nutzwertanalyse, Analyse, hpmatura, schneiderchristian, Christian Schneider">
+		<meta name="description" lang="de" content="Onlineapplikation zum Erstellen einer Nutzwertanalyse">
+
+		<script type="text/javascript">
+			var _gaq = _gaq || [];
+			_gaq.push(['_setAccount', 'UA-34502574-1']);
+			_gaq.push(['_trackPageview']);
+			(function() {
+				var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+				ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+				var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+			})();
+		</script><meta name="darkreader" content="d78b68dffbad4772b16e9fb0a9e2f63f"><style class="darkreader darkreader--override" media="screen">.vimvixen-hint {
+    background-color: #7b5300 !important;
+    border-color: #d8b013 !important;
+    color: #f3e8c8 !important;
+}
+#vimvixen-console-frame {
+    color-scheme: light !important
+}
+::placeholder {
+    opacity: 0.5 !important;
+}
+#edge-translate-panel-body,
+.MuiTypography-body1,
+.nfe-quote-text {
+    color: var(--darkreader-neutral-text) !important;
+}
+gr-main-header {
+    background-color: #0f3a48 !important;
+}
+.tou-z65h9k,
+.tou-mignzq,
+.tou-1b6i2ox,
+.tou-lnqlqk {
+    background-color: var(--darkreader-neutral-background) !important;
+}
+.tou-75mvi {
+    background-color: #032029 !important;
+}
+.tou-ta9e87,
+.tou-1w3fhi0,
+.tou-1b8t2us,
+.tou-py7lfi,
+.tou-1lpmd9d,
+.tou-1frrtv8,
+.tou-17ezmgn {
+    background-color: #0a0a0a !important;
+}
+.tou-uknfeu {
+    background-color: #231603 !important;
+}
+.tou-6i3zyv {
+    background-color: #19576c !important;
+}
+div.mermaid-viewer-control-panel .btn {
+  fill: var(--darkreader-neutral-text);
+  background-color: var(--darkreader-neutral-background);
+}
+svg g rect.er {
+  fill: var(--darkreader-neutral-background) !important;
+}
+svg g rect.er.entityBox {
+  fill: var(--darkreader-neutral-background) !important;
+}
+svg g rect.er.attributeBoxOdd {
+  fill: var(--darkreader-neutral-background) !important;
+}
+svg g rect.er.attributeBoxEven {
+  fill-opacity: 0.8 !important;
+  fill: var(--darkreader-selection-background);
+}
+svg rect.er.relationshipLabelBox {
+  fill: var(--darkreader-neutral-background) !important;
+}
+svg g g.nodes rect, svg g g.nodes polygon {
+  fill: var(--darkreader-neutral-background) !important;
+}
+svg g rect.task {
+  fill: var(--darkreader-selection-background) !important;
+}
+svg line.messageLine0, svg line.messageLine1 {
+  stroke: var(--darkreader-neutral-text) !important;
+}
+div.mermaid .actor {
+  fill: var(--darkreader-neutral-background) !important;
+}
+embed[type="application/pdf"] { filter: invert(100%) contrast(90%); }</style>
+
+			<script ecommerce-type="extend-native-history-api">(()=>{const e=history.pushState,t=history.replaceState,a=history.back,r=history.forward;function n(){window.postMessage({_custom_type_:"CUSTOM_ON_URL_CHANGED"})}history.pushState=function(){e.apply(history,arguments),n()},history.replaceState=function(){t.apply(history,arguments),n()},history.back=function(){a.apply(history,arguments),n()},history.forward=function(){r.apply(history,arguments),n()}})()</script></head>
+	
+	<body bis_register="W3sibWFzdGVyIjp0cnVlLCJleHRlbnNpb25JZCI6IntmY2E2N2Y0MS03NzZiLTQzOGEtOTM4Mi02NjIxNzE4NTg2MTV9IiwiYWRibG9ja2VyU3RhdHVzIjp7IkRJU1BMQVkiOiJkaXNhYmxlZCIsIkZBQ0VCT09LIjoiZGlzYWJsZWQiLCJUV0lUVEVSIjoiZGlzYWJsZWQiLCJSRURESVQiOiJkaXNhYmxlZCIsIlBJTlRFUkVTVCI6ImRpc2FibGVkIiwiSU5TVEFHUkFNIjoiZGlzYWJsZWQifSwidmVyc2lvbiI6IjEuOS4xNSIsInNjb3JlIjoxMDkxNX1d">
+		<form method="POST" action=""></form><input type="hidden" name="numberOfOptions" value="3"><input type="hidden" name="numberOfCriteria" value="5"><input type="hidden" name="minimumScale" value="0"><input type="hidden" name="maximumScale" value="10">
+							
+						<input type="hidden" name="step" value="4">
+					</table><table border="1px">
+						<tbody><tr>
+							<td>
+							</td>
+				
+							<th>
+								YuriCable
+							</th>
+					
+							<th>
+								Tamarin
+							</th>
+					
+							<th>
+								Kanzi
+							</th>
+						</tr>
+						<tr>
+							<td>
+								Kosten (25%)
+							</td>
+					
+							<td>
+									<table width="150px"><tbody><tr align="right">
+												<td width="75px"><span style="color: grey; --darkreader-inline-color: #988f81;" data-darkreader-inline-color="">
+													5.0
+												</span></td>
+												<td width="75px">
+													1.2
+												</td>
+											</tr></tbody></table>
+						
+							</td>
+						
+							<td>
+									<table width="150px"><tbody><tr align="right">
+												<td width="75px"><span style="color: grey; --darkreader-inline-color: #988f81;" data-darkreader-inline-color="">
+													10.0
+												</span></td>
+												<td width="75px">
+													2.5
+												</td>
+											</tr></tbody></table>
+						
+							</td>
+						
+							<td>
+									<table width="150px"><tbody><tr align="right">
+												<td width="75px"><span style="color: grey; --darkreader-inline-color: #988f81;" data-darkreader-inline-color="">
+													2.0
+												</span></td>
+												<td width="75px">
+													0.5
+												</td>
+											</tr></tbody></table>
+						
+							</td>
+						
+						</tr>
+					
+						<tr>
+							<td>
+								Verfügbarkeit (25%)
+							</td>
+					
+							<td>
+									<table width="150px"><tbody><tr align="right">
+												<td width="75px"><span style="color: grey; --darkreader-inline-color: #988f81;" data-darkreader-inline-color="">
+													9.0
+												</span></td>
+												<td width="75px">
+													2.2
+												</td>
+											</tr></tbody></table>
+						
+							</td>
+						
+							<td>
+									<table width="150px"><tbody><tr align="right">
+												<td width="75px"><span style="color: grey; --darkreader-inline-color: #988f81;" data-darkreader-inline-color="">
+													10.0
+												</span></td>
+												<td width="75px">
+													2.5
+												</td>
+											</tr></tbody></table>
+						
+							</td>
+						
+							<td>
+									<table width="150px"><tbody><tr align="right">
+												<td width="75px"><span style="color: grey; --darkreader-inline-color: #988f81;" data-darkreader-inline-color="">
+													1.0
+												</span></td>
+												<td width="75px">
+													0.2
+												</td>
+											</tr></tbody></table>
+						
+							</td>
+						
+						</tr>
+					
+						<tr>
+							<td>
+								Vielseitigkeit in der Nutzung  (15%)
+							</td>
+					
+							<td>
+									<table width="150px"><tbody><tr align="right">
+												<td width="75px"><span style="color: grey; --darkreader-inline-color: #988f81;" data-darkreader-inline-color="">
+													9.0
+												</span></td>
+												<td width="75px">
+													1.4
+												</td>
+											</tr></tbody></table>
+						
+							</td>
+						
+							<td>
+									<table width="150px"><tbody><tr align="right">
+												<td width="75px"><span style="color: grey; --darkreader-inline-color: #988f81;" data-darkreader-inline-color="">
+													1.0
+												</span></td>
+												<td width="75px">
+													0.1
+												</td>
+											</tr></tbody></table>
+						
+							</td>
+						
+							<td>
+									<table width="150px"><tbody><tr align="right">
+												<td width="75px"><span style="color: grey; --darkreader-inline-color: #988f81;" data-darkreader-inline-color="">
+													1.0
+												</span></td>
+												<td width="75px">
+													0.1
+												</td>
+											</tr></tbody></table>
+						
+							</td>
+						
+						</tr>
+					
+						<tr>
+							<td>
+								Erweiterbarkeit (20%)
+							</td>
+					
+							<td>
+									<table width="150px"><tbody><tr align="right">
+												<td width="75px"><span style="color: grey; --darkreader-inline-color: #988f81;" data-darkreader-inline-color="">
+													10.0
+												</span></td>
+												<td width="75px">
+													2.0
+												</td>
+											</tr></tbody></table>
+						
+							</td>
+						
+							<td>
+									<table width="150px"><tbody><tr align="right">
+												<td width="75px"><span style="color: grey; --darkreader-inline-color: #988f81;" data-darkreader-inline-color="">
+													7.0
+												</span></td>
+												<td width="75px">
+													1.4
+												</td>
+											</tr></tbody></table>
+						
+							</td>
+						
+							<td>
+									<table width="150px"><tbody><tr align="right">
+												<td width="75px"><span style="color: grey; --darkreader-inline-color: #988f81;" data-darkreader-inline-color="">
+													0.0
+												</span></td>
+												<td width="75px">
+													0.0
+												</td>
+											</tr></tbody></table>
+						
+							</td>
+						
+						</tr>
+					
+						<tr>
+							<td>
+								Benutzerfreundlichkeit (15%)
+							</td>
+					
+							<td>
+									<table width="150px"><tbody><tr align="right">
+												<td width="75px"><span style="color: grey; --darkreader-inline-color: #988f81;" data-darkreader-inline-color="">
+													7.0
+												</span></td>
+												<td width="75px">
+													1.1
+												</td>
+											</tr></tbody></table>
+						
+							</td>
+						
+							<td>
+									<table width="150px"><tbody><tr align="right">
+												<td width="75px"><span style="color: grey; --darkreader-inline-color: #988f81;" data-darkreader-inline-color="">
+													5.0
+												</span></td>
+												<td width="75px">
+													0.8
+												</td>
+											</tr></tbody></table>
+						
+							</td>
+						
+							<td>
+									<table width="150px"><tbody><tr align="right">
+												<td width="75px"><span style="color: grey; --darkreader-inline-color: #988f81;" data-darkreader-inline-color="">
+													4.0
+												</span></td>
+												<td width="75px">
+													0.6
+												</td>
+											</tr></tbody></table>
+						
+							</td>
+						
+						</tr>
+					
+						<tr>
+							<td><span style="text-decoration:underline">
+								Aufsummierte Präferenzen
+							</span></td>
+				
+						<td>
+							<table width="150px"><tbody><tr align="right"><td><span style="text-decoration:underline">
+								7.9
+							</span></td></tr></tbody></table>
+						</td>
+					
+						<td>
+							<table width="150px"><tbody><tr align="right"><td><span style="text-decoration:underline">
+								7.3
+							</span></td></tr></tbody></table>
+						</td>
+					
+						<td>
+							<table width="150px"><tbody><tr align="right"><td><span style="text-decoration:underline">
+								1.4
+							</span></td></tr></tbody></table>
+						</td>
+					
+						</tr>
+					</tbody></table>
+					<br>				
+			
+
+		
+
+		
+	
+
+
+</body></html>
