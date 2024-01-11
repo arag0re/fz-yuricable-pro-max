@@ -220,20 +220,23 @@ SDQDevice +-right- yuricable_pro_max
 
 ```plantuml
 @startgantt
+Labels on first column
 saturday are closed
 sunday are closed
 project starts 2024-01-10 
+[M1] happens D+1
+[M2] happens D+6
 [Docu] requires 5 day and starts D+1
 -- Flipper --
 [SDQ Implementation] requires 2 day
-[CLI Commands] requires 2 day and starts D+2
-[UART Implementation] requires 1 day and starts D+2
-[JTAG Implementation] requires 2 day and starts D+5
+[CLI Commands] requires 2 day and starts at [SDQ Implementation]s end
+[UART Implementation] requires 1 day and starts at [SDQ Implementation]s end
+[JTAG Implementation] requires 2 day and starts at [UART Implementation]s end
 -- Monitor --
-[Explorer WebSerial] requires 2 day
-[Create React App] requires 1 day and starts D+2
-[Implement WebSerial] requires 1 day and starts D+3
-[Command Buttons] requires 1 day and starts D+6
-[Device Filter] requires 1 day and starts D+6
+[Explor WebSerial] requires 2 day
+[Create React App] requires 1 day and starts at [Explor WebSerial]s end
+[Implement WebSerial] requires 1 day and starts at [Create React App]s end
+[Command Buttons] requires 1 day and starts at [Implement WebSerial]s end
+[Device Filter] requires 1 day and starts at [Implement WebSerial]s end
 @endgantt
 ```
