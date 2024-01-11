@@ -117,7 +117,8 @@ __________________________
 
 <img src="docs/FlipperJLINK.jpg" alt="FlipperJLINK" height="850px"/>
 
-or buy a JTAG Adapter for Flipper Zero by [@jrozner](https://twitter.com/jrozner) on [Tindie](https://www.tindie.com/products/cuttrace/flipper-zero-jlink-adapter/) and extend the GPIO-Pins
+or buy a JTAG Adapter for Flipper Zero by [@jrozner](https://twitter.com/jrozner)
+on [Tindie](https://www.tindie.com/products/cuttrace/flipper-zero-jlink-adapter/) and extend the GPIO-Pins
 
 <img src="docs/flipper_jlink_adapter.jpg" alt="FlipperJLINKAdapter" height="850px"/>
 
@@ -136,7 +137,9 @@ Credits for SDQ reverse engineering to [@nyansatan](https://github.com/nyansatan
 
 + [Tamarin Firmware](https://github.com/stacksmashing/tamarin-firmware)
 
-Credits to [@stacksmashing](https://github.com/stacksmashing) for an example pi pico implementation and his defcon talk on this subject. (watch [here](https://www.youtube.com/watch?v=8p3Oi4DL0eI&list=PL0P69gP-VL8eSCSNY-gQefgY1DXBSlNJC&index=6&t=616s))
+Credits to [@stacksmashing](https://github.com/stacksmashing) for an example pi pico implementation and his defcon talk
+on this subject. (
+watch [here](https://www.youtube.com/watch?v=8p3Oi4DL0eI&list=PL0P69gP-VL8eSCSNY-gQefgY1DXBSlNJC&index=6&t=616s))
 
 ### UFBT
 
@@ -145,4 +148,92 @@ Credits to [@stacksmashing](https://github.com/stacksmashing) for an example pi 
 
 ### ARM Stuff
 
-+ DWT_CYCCNT explained: [ARM DOCS](https://developer.arm.com/documentation/ddi0403/d/Debug-Architecture/ARMv7-M-Debug/The-Data-Watchpoint-and-Trace-unit/CYCCNT-cycle-counter-and-related-timers?lang=en)
++ DWT_CYCCNT
+  explained: [ARM DOCS](https://developer.arm.com/documentation/ddi0403/d/Debug-Architecture/ARMv7-M-Debug/The-Data-Watchpoint-and-Trace-unit/CYCCNT-cycle-counter-and-related-timers?lang=en)
+
+## Class Diagramm
+
+```plantuml
+@startuml
+
+skinparam linetype polyline
+skinparam linetype ortho
+
+class SDQDevice {
+    + const GpioPin* gpio_pin
+    + SDQTimings timings
+    + SDQDeviceError error
+    + bool listening
+    + SDQDeviceCommandCallback command_callback
+    + command_callback_context: void*
+    void start()
+    void stop()
+    bool send(const uint8_t data[], size_t data_size)
+    bool receive(uint8_t data[], size_t data_size)
+}
+
+enum SDQDeviceError {
+    SDQDeviceErrorNone
+    SDQDeviceErrorResetInProgress
+    SDQDeviceErrorPresenceConflict
+    SDQDeviceErrorInvalidCommand
+    SDQDeviceErrorBitReadTiming
+    SDQDeviceErrorTimeout
+}
+
+class SDQTimings {
+    + uint32_t BREAK_meaningful_min
+    + uint32_t BREAK_meaningful_max
+    + uint32_t BREAK_meaningful
+    + uint32_t BREAK_recovery
+    + uint32_t WAKE_meaningful_min
+    + uint32_t WAKE_meaningful_max
+    + uint32_t WAKE_meaningful
+    + uint32_t WAKE_recovery
+    + uint32_t ZERO_meaningful_min
+    + uint32_t ZERO_meaningful_max
+    + uint32_t ZERO_meaningful
+    + uint32_t ZERO_recovery
+    + uint32_t ONE_meaningful_min
+    + uint32_t ONE_meaningful_max
+    + uint32_t ONE_meaningful
+    + uint32_t ONE_recovery
+    + uint32_t ZERO_STOP_recovery
+    + uint32_t ONE_STOP_recovery
+}
+
+interface yuricable_pro_max {
+    + const GpioPin SDQ_PIN
+    {static} void demo_input_callback(InputEvent* input_event, FuriMessageQueue* queue)
+    {static} void demo_render_callback(Canvas* canvas, void* ctx)
+    int32_t yuricable_pro_max_app(void* p)
+}
+
+SDQDevice *-- SDQTimings
+SDQDevice <-left- SDQDeviceError
+SDQDevice +-right- yuricable_pro_max
+
+@enduml
+```
+
+## Gantt
+
+```plantuml
+@startgantt
+saturday are closed
+sunday are closed
+project starts 2024-01-10 
+[Docu] requires 5 day and starts D+1
+-- Flipper --
+[SDQ Implementation] requires 2 day
+[CLI Commands] requires 2 day and starts D+2
+[UART Implementation] requires 1 day and starts D+2
+[JTAG Implementation] requires 2 day and starts D+5
+-- Monitor --
+[Explorer WebSerial] requires 2 day
+[Create React App] requires 1 day and starts D+2
+[Implement WebSerial] requires 1 day and starts D+3
+[Command Buttons] requires 1 day and starts D+6
+[Device Filter] requires 1 day and starts D+6
+@endgantt
+```
