@@ -1,6 +1,7 @@
+#pragma once
+
 #include <gui/gui.h>
-#include <usb_uart_bridge.h>
-#include <sdq_device.h>
+#include <lib/sdq/sdq_device.c>
 
 typedef enum { EventTypeKey, EventTypeUpdateGUI } EventType;
 

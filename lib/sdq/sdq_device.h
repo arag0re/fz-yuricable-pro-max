@@ -2,9 +2,10 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <crc.h>
+#include <lib/crc/crc.c>
 #include <furi_hal_gpio.h>
 #include <furi_hal.h>
+#include <lib/uart/usb_uart_bridge.c>
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,7 +58,6 @@ typedef struct {
 
 typedef enum {
     SDQDeviceErrorNone = 0,
-    SDQDeviceErrorResetInProgress,
     SDQDeviceErrorNotConnected,
     SDQDeviceErrorInvalidCommand,
     SDQDeviceErrorBitReadTiming,
@@ -66,30 +66,23 @@ typedef enum {
 
 typedef struct SDQDevice SDQDevice;
 
-typedef bool (*SDQDeviceCommandCallback)(uint8_t* command, void* context);
-
 struct SDQDevice {
     const GpioPin* gpio_pin;
+    UsbUartBridge* uart_bridge;
     SDQTimings timings;
     SDQDeviceError error;
     SDQDeviceCommand runCommand;
     bool listening;
     bool connected;
     bool resetInProgress;
-
-    const FuriMessageQueue* eventQueue;
-
-    SDQDeviceCommandCallback command_callback;
-    void* command_callback_context;
+    bool commandExecuted;
 };
 
-struct SDQDevice* sdq_device_alloc(const GpioPin* gpio_pin);
+struct SDQDevice* sdq_device_alloc(const GpioPin* gpio_pin, UsbUartBridge* uart_bridge);
 void sdq_device_free(SDQDevice* bus);
 
 void sdq_device_start(SDQDevice* bus);
 void sdq_device_stop(SDQDevice* bus);
-
-void sdq_device_set_command_callback(SDQDevice* bus, SDQDeviceCommandCallback callback, void* context);
 
 bool sdq_device_send(SDQDevice* bus, const uint8_t data[], size_t data_size);
 bool sdq_device_receive(SDQDevice* bus, uint8_t data[], size_t data_size);

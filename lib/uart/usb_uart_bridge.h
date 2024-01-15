@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
 
 typedef struct UsbUartBridge UsbUartBridge;
@@ -29,3 +30,5 @@ void usb_uart_set_config(UsbUartBridge* usb_uart, UsbUartConfig* cfg);
 void usb_uart_get_config(UsbUartBridge* usb_uart, UsbUartConfig* cfg);
 
 void usb_uart_get_state(UsbUartBridge* usb_uart, UsbUartState* st);
+
+void usb_uart_send_data(UsbUartBridge* usb_uart, uint8_t* data, size_t data_size);

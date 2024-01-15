@@ -1,5 +1,6 @@
-#include <yuricable_pro_max_structs.c>
+#include <yuricable_pro_max.h>
 #include <yuricable_pro_max_icons.h>
+#include <lib/dab/dap_v2_usb.h>
 
 #define TAG "YURICABLE_PRO_MAX"
 #define SDQ_PIN gpio_ext_pa7 // GPIO 2
@@ -40,7 +41,7 @@ static void yuricable_render_callback(Canvas* canvas, void* ctx) {
     canvas_draw_str(canvas, 4, 50, "DFU");
     canvas_draw_str(canvas, 4, 61, "Recovery");
 
-    canvas_draw_icon(canvas, 120, 19 * yuricable_context->data->sdq->runCommand, &I_ButtonLeft_4x7);
+    canvas_draw_icon(canvas, 120, 7 + 12 * yuricable_context->data->sdq->runCommand, &I_ButtonLeft_4x7);
 
     furi_mutex_release(yuricable_context->mutex);
 }
@@ -56,11 +57,11 @@ int32_t yuricable_pro_max_app(void* p) {
     // Queue for events (tick or input)
     yuricable_context->queue = furi_message_queue_alloc(8, sizeof(Event));
 
-    yuricable_context->data->sdq = sdq_device_alloc(&SDQ_PIN);
-    yuricable_context->data->sdq->runCommand = SDQDeviceCommand_DCSD;
-
     UsbUartConfig bridgeConfig = {.vcp_ch = 1, .uart_ch = 0, .baudrate_mode = 0, .baudrate = 115200};
     UsbUartBridge* uartBridge = usb_uart_enable(&bridgeConfig);
+
+    yuricable_context->data->sdq = sdq_device_alloc(&SDQ_PIN, uartBridge);
+    yuricable_context->data->sdq->runCommand = SDQDeviceCommand_USB_A_CHARGING_CABLE;
 
     //  Set ViewPort callbacks
     ViewPort* view_port = view_port_alloc();
@@ -113,6 +114,7 @@ int32_t yuricable_pro_max_app(void* p) {
     } while (processing);
 
     usb_uart_disable(uartBridge);
+    free(uartBridge);
 
     sdq_device_free(yuricable_context->data->sdq);
     free(yuricable_context);

@@ -165,9 +165,13 @@ skinparam linetype ortho
 
 class SDQDevice {
     + const GpioPin* gpio_pin
+    + const UsbUartBridge* uart_bridge
     + SDQTimings timings
     + SDQDeviceError error
+    + SDQDeviceCommand runCommand
     + bool listening
+    + bool connected
+    + bool resetInProgress
     + SDQDeviceCommandCallback command_callback
     + command_callback_context: void*
     void start()
@@ -183,6 +187,15 @@ enum SDQDeviceError {
     SDQDeviceErrorInvalidCommand
     SDQDeviceErrorBitReadTiming
     SDQDeviceErrorTimeout
+}
+
+enum SDQDeviceCommand {
+    SDQDeviceCommand_NONE
+    SDQDeviceCommand_DCSD
+    SDQDeviceCommand_JTAG
+    SDQDeviceCommand_DFU
+    SDQDeviceCommand_RECOVERY
+    SDQDeviceCommand_USB_A_CHARGING_CABLE
 }
 
 class SDQTimings {
@@ -206,6 +219,19 @@ class SDQTimings {
     + uint32_t ONE_STOP_recovery
 }
 
+class TRISTART_RESPONSES {
+    DFU: uint8_t[7]
+    RESET_DEVICE: uint8_t[7]
+    USB_UART_JTAG: uint8_t[7]
+    USB_SPAM_JTAG: uint8_t[7]
+    USB_UART: uint8_t[7]
+    USB_A_CHARGING_CABLE: uint8_t[7]
+}
+
+class UsbUartBridge {
+
+}
+
 interface yuricable_pro_max {
     + const GpioPin SDQ_PIN
     {static} void demo_input_callback(InputEvent* input_event, FuriMessageQueue* queue)
@@ -214,8 +240,11 @@ interface yuricable_pro_max {
 }
 
 SDQDevice *-- SDQTimings
+SDQDevice *-- TRISTART_RESPONSES
 SDQDevice <-left- SDQDeviceError
+SDQDevice <-left- SDQDeviceCommand
 SDQDevice +-right- yuricable_pro_max
+SDQDevice +-right- UsbUartBridge
 
 @enduml
 ```
@@ -235,7 +264,8 @@ project starts 2024-01-10
 [SDQ Implementation] requires 2 day
 [CLI Commands] requires 2 day and starts at [SDQ Implementation]s end
 [UART Implementation] requires 1 day and starts at [SDQ Implementation]s end
-[JTAG Implementation] requires 2 day and starts at [UART Implementation]s end
+[SWD Implementation] requires 1 day and starts at [UART Implementation]s end
+[JTAG Implementation] requires 1 day and starts at [SWD Implementation]s end
 -- Monitor --
 [Explor WebSerial] requires 2 day
 [Create React App] requires 1 day and starts at [Explor WebSerial]s end

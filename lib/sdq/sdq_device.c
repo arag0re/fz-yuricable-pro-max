@@ -1,5 +1,4 @@
-#include <sdq_device.h>
-#include <yuricable_pro_max_structs.c>
+#include <lib/sdq/sdq_device.h>
 
 const SDQTimings sdq_timings = { // microseconds
     .BREAK_meaningful_min = 12,
@@ -30,6 +29,9 @@ const TRISTART_RESPONSES responses = {
     .USB_A_CHARGING_CABLE = {0x75, 0x10, 0x0c, 0x00, 0x00, 0x00, 0x00},
 };
 
+uint8_t RECOVERY_PLIST[277] =
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\"><plist version=\"1.0\"><dict> <key>Label</key> <string>yuricable</string> <key>Request</key> <string>EnterRecovery</string> </dict></plist>";
+
 uint8_t crc_data(const uint8_t* data, size_t len) {
     crc_t crc = crc_init();
     crc = crc_update(crc, data, len);
@@ -37,9 +39,10 @@ uint8_t crc_data(const uint8_t* data, size_t len) {
     return crc;
 }
 
-struct SDQDevice* sdq_device_alloc(const GpioPin* gpio_pin) {
+struct SDQDevice* sdq_device_alloc(const GpioPin* gpio_pin, UsbUartBridge* uart_bridge) {
     struct SDQDevice* bus = malloc(sizeof(struct SDQDevice));
     bus->gpio_pin = gpio_pin;
+    bus->uart_bridge = uart_bridge;
     bus->timings = sdq_timings;
     bus->error = SDQDeviceErrorNone;
     bus->runCommand = SDQDeviceCommand_NONE;
@@ -72,16 +75,17 @@ static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
             if (sdq_device_wait_while_gpio_is(bus, bus->timings.BREAK_meaningful_max, false)) {
                 switch (bus->runCommand) {
                 case SDQDeviceCommand_NONE:
+                    bus->commandExecuted = true;
                     break;
                 case SDQDeviceCommand_DFU:
-                    if (bus->error == SDQDeviceErrorResetInProgress) {
+                    if (bus->resetInProgress) {
                         if (sdq_device_send(bus, responses.DFU, sizeof(responses.DFU))) {
-                            FURI_LOG_I("SDQ", "SHOULD BE DFU NOW");
+                            bus->resetInProgress = false;
+                            bus->commandExecuted = true;
                         }
                     } else {
                         if (sdq_device_send(bus, responses.RESET_DEVICE, sizeof(responses.RESET_DEVICE))) {
-                            bus->error = SDQDeviceErrorResetInProgress;
-                            FURI_LOG_I("SDQ", "SENT RESET COMMAND");
+                            bus->resetInProgress = true;
                         }
                     }
                     break;
@@ -89,23 +93,26 @@ static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
                     if (bus->resetInProgress) {
                         if (sdq_device_send(bus, responses.USB_UART, sizeof(responses.USB_UART))) {
                             bus->resetInProgress = false;
-                            FURI_LOG_I("SDQ", "SHOULD BE DFU NOW");
+                            bus->commandExecuted = true;
                         }
                     } else {
                         if (sdq_device_send(bus, responses.RESET_DEVICE, sizeof(responses.RESET_DEVICE))) {
                             bus->resetInProgress = true;
-                            FURI_LOG_I("SDQ", "SENT RESET COMMAND");
                         }
                     }
                     break;
                 case SDQDeviceCommand_USB_A_CHARGING_CABLE:
                     if (sdq_device_send(bus, responses.USB_A_CHARGING_CABLE, sizeof(responses.USB_A_CHARGING_CABLE))) {
-                        FURI_LOG_I("SDQ", "SENT CHARGING COMMAND");
+                        bus->commandExecuted = true;
                     }
                     break;
                 case SDQDeviceCommand_JTAG:
                     break;
                 case SDQDeviceCommand_RECOVERY:
+                    if (sdq_device_send(bus, responses.USB_UART, sizeof(responses.USB_UART))) {
+                        usb_uart_send_data(bus->uart_bridge, RECOVERY_PLIST, sizeof(RECOVERY_PLIST));
+                        bus->commandExecuted = true;
+                    }
                     break;
                 }
             }
@@ -120,7 +127,7 @@ static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
             break;
         }
     }
-    return (bus->error == SDQDeviceErrorResetInProgress);
+    return (bus->error != SDQDeviceErrorNone);
 }
 
 static inline bool sdq_device_bus_start(SDQDevice* bus) {
@@ -157,11 +164,6 @@ void sdq_device_stop(SDQDevice* bus) {
     furi_hal_gpio_write(bus->gpio_pin, true);
     furi_hal_gpio_init(bus->gpio_pin, GpioModeAnalog, GpioPullNo, GpioSpeedVeryHigh);
     furi_hal_gpio_remove_int_callback(bus->gpio_pin);
-}
-
-void sdq_device_set_command_callback(SDQDevice* bus, SDQDeviceCommandCallback callback, void* context) {
-    bus->command_callback = callback;
-    bus->command_callback_context = context;
 }
 
 uint8_t sdq_device_receive_bit(SDQDevice* bus, bool isLastBitofByte) {
