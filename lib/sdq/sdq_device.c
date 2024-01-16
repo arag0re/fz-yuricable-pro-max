@@ -114,6 +114,8 @@ static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
                         bus->commandExecuted = true;
                     }
                     break;
+                default:
+                    break;
                 }
                 break;
             case TRISTAR_UNKNOWN_76:
@@ -122,27 +124,27 @@ static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
             case TRISTAR_POWER:
                 sdq_device_send(bus, responses.POWER_ANSWER, sizeof(responses.POWER_ANSWER));
                 break;
+            default:
+                break;
             }
         }
     }
-    return (bus->error != SDQDeviceErrorNone);
+    return (bus->error == SDQDeviceErrorNone);
 }
 
 static inline bool sdq_device_bus_start(SDQDevice* bus) {
-    FURI_CRITICAL_ENTER();
     bus->connected = true;
     while(sdq_device_receive_and_process_command(bus))
         ;
     const bool result = (bus->error == SDQDeviceErrorNone);
     bus->connected = false;
-    FURI_CRITICAL_EXIT();
     return result;
 }
 
 static void sdq_device_exti_callback(void* context) {
     SDQDevice* bus = context;
     FURI_CRITICAL_ENTER();
-    furi_hal_gpio_init(bus->gpio_pin, GpioModeOutputOpenDrain, GpioPullUp, GpioSpeedLow);
+    furi_hal_gpio_init(bus->gpio_pin, GpioModeOutputOpenDrain, GpioPullNo, GpioSpeedLow);
     if(sdq_device_wait_while_gpio_is(bus, bus->timings.BREAK_meaningful_max - 8, false)) {
         if(sdq_device_wait_while_gpio_is(bus, bus->timings.BREAK_recovery + 1, true)) {
             sdq_device_bus_start(bus);
