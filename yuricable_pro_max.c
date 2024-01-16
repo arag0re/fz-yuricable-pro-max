@@ -45,13 +45,13 @@ static void yuricable_render_callback(Canvas* canvas, void* ctx) {
     furi_mutex_release(yuricable_context->mutex);
 }
 
-FuriString* yuricable_command_callback(const char* command, size_t command_length, void* ctx) {
+FuriString* yuricable_command_callback(const char* command, void* ctx) {
     YuriCableContext* yuricable_context = ctx;
     UNUSED(yuricable_context);
-    if (!strncmp(command, "help", command_length)) {
+    if (strcmp(command, "help") == 0) {
         return furi_string_alloc_printf("Hi");
     }
-    return furi_string_alloc_printf("%s %d", command, command_length);
+    return furi_string_alloc_printf("%s", command);
 }
 
 int32_t yuricable_pro_max_app(void* p) {

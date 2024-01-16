@@ -21,7 +21,7 @@ typedef struct {
     uint32_t baudrate_cur;
 } UsbUartState;
 
-typedef FuriString* (*UsbUartBridgeCommand)(const char* command, size_t command_length, void* context);
+typedef FuriString* (*UsbUartBridgeCommand)(const char* command, void* context);
 
 UsbUartBridge* usb_uart_enable(UsbUartConfig* cfg);
 

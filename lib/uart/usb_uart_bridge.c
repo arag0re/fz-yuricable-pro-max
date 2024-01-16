@@ -290,6 +290,9 @@ static int32_t usb_uart_worker(void* context) {
 static int32_t usb_uart_tx_thread(void* context) {
     UsbUartBridge* usb_uart = (UsbUartBridge*)context;
 
+    bool is_command = false;
+    size_t command_length = 0;
+    uint8_t command_buffer[USB_CDC_PKT_LEN] = {0};
     uint8_t data[USB_CDC_PKT_LEN];
     while (1) {
         uint32_t events = furi_thread_flags_wait(WORKER_ALL_TX_EVENTS, FuriFlagWaitAny, FuriWaitForever);
@@ -303,14 +306,23 @@ static int32_t usb_uart_tx_thread(void* context) {
             if (len > 0) {
                 usb_uart->st.tx_cnt += len;
 
-                if (data[0] == '/') {
-                    FuriString* message = usb_uart->commandCallback((const char*)&data[1], len - 1, usb_uart->commandContext);
-                    if (message != NULL) {
-                        const char* c_message = furi_string_get_cstr(message);
-                        furi_hal_cdc_send(usb_uart->cfg.vcp_ch, (uint8_t*)c_message, strlen(c_message));
+                if (data[0] == '/' || is_command) {
+                    is_command = true;
+
+                    memcpy(&command_buffer[command_length], data, len);
+                    command_length += len;
+
+                    if (data[len - 1] == 0xd) {
+                        is_command = false;
+                        FuriString* message = usb_uart->commandCallback((const char*)command_buffer, usb_uart->commandContext);
+                        if (message != NULL) {
+                            const char* c_message = furi_string_get_cstr(message);
+                            furi_hal_cdc_send(usb_uart->cfg.vcp_ch, (uint8_t*)c_message, strlen(c_message));
+                        }
+                        furi_string_free(message);
+                        command_length = 0;
                     }
-                    furi_string_free(message);
-                    break;
+                    continue;
                 }
 
                 if (usb_uart->cfg.software_de_re != 0) furi_hal_gpio_write(USB_USART_DE_RE_PIN, false);
