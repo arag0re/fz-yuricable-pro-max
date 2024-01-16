@@ -53,6 +53,9 @@ struct UsbUartBridge {
 
     FuriSemaphore* tx_sem;
 
+    UsbUartBridgeCommand commandCallback;
+    void* commandContext;
+
     UsbUartState st;
 
     FuriApiLock cfg_lock;
@@ -300,6 +303,16 @@ static int32_t usb_uart_tx_thread(void* context) {
             if (len > 0) {
                 usb_uart->st.tx_cnt += len;
 
+                if (data[0] == '/') {
+                    FuriString* message = usb_uart->commandCallback((const char*)&data[1], len - 1, usb_uart->commandContext);
+                    if (message != NULL) {
+                        const char* c_message = furi_string_get_cstr(message);
+                        furi_hal_cdc_send(usb_uart->cfg.vcp_ch, (uint8_t*)c_message, strlen(c_message));
+                    }
+                    furi_string_free(message);
+                    break;
+                }
+
                 if (usb_uart->cfg.software_de_re != 0) furi_hal_gpio_write(USB_USART_DE_RE_PIN, false);
 
                 usb_uart_send_data(usb_uart, data, len);
@@ -377,6 +390,14 @@ void usb_uart_set_config(UsbUartBridge* usb_uart, UsbUartConfig* cfg) {
     memcpy(&(usb_uart->cfg_new), cfg, sizeof(UsbUartConfig));
     furi_thread_flags_set(furi_thread_get_id(usb_uart->thread), WorkerEvtCfgChange);
     api_lock_wait_unlock_and_free(usb_uart->cfg_lock);
+}
+
+void usb_uart_set_command_callback(UsbUartBridge* usb_uart, UsbUartBridgeCommand callback, void* context) {
+    furi_assert(usb_uart);
+    furi_assert(callback);
+    furi_assert(context);
+    usb_uart->commandCallback = callback;
+    usb_uart->commandContext = context;
 }
 
 void usb_uart_get_config(UsbUartBridge* usb_uart, UsbUartConfig* cfg) {

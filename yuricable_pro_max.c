@@ -1,6 +1,5 @@
 #include <yuricable_pro_max.h>
 #include <yuricable_pro_max_icons.h>
-#include <lib/dab/dap_v2_usb.h>
 
 #define TAG "YURICABLE_PRO_MAX"
 #define SDQ_PIN gpio_ext_pa7 // GPIO 2
@@ -46,6 +45,15 @@ static void yuricable_render_callback(Canvas* canvas, void* ctx) {
     furi_mutex_release(yuricable_context->mutex);
 }
 
+FuriString* yuricable_command_callback(const char* command, size_t command_length, void* ctx) {
+    YuriCableContext* yuricable_context = ctx;
+    UNUSED(yuricable_context);
+    if (!strncmp(command, "help", command_length)) {
+        return furi_string_alloc_printf("Hi");
+    }
+    return NULL;
+}
+
 int32_t yuricable_pro_max_app(void* p) {
     UNUSED(p);
     FURI_LOG_I(TAG, "Starting the SDQ Listener on GPIO 2!");
@@ -57,8 +65,9 @@ int32_t yuricable_pro_max_app(void* p) {
     // Queue for events (tick or input)
     yuricable_context->queue = furi_message_queue_alloc(8, sizeof(Event));
 
-    UsbUartConfig bridgeConfig = {.vcp_ch = 1, .uart_ch = 0, .baudrate_mode = 0, .baudrate = 115200};
+    UsbUartConfig bridgeConfig = {.vcp_ch = 1, .uart_ch = 0, .baudrate_mode = 0, .baudrate = 115200, .};
     UsbUartBridge* uartBridge = usb_uart_enable(&bridgeConfig);
+    usb_uart_set_command_callback(uartBridge, yuricable_command_callback, yuricable_context);
 
     yuricable_context->data->sdq = sdq_device_alloc(&SDQ_PIN, uartBridge);
     yuricable_context->data->sdq->runCommand = SDQDeviceCommand_DCSD;
