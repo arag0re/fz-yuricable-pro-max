@@ -319,8 +319,12 @@ static int32_t usb_uart_tx_thread(void* context) {
                         command_buffer[command_length - 1] = 0;
                         FuriString* message = usb_uart->commandCallback((const char*)command_buffer + 1, usb_uart->commandContext);
                         if (message != NULL) {
-                            const char* c_message = furi_string_get_cstr(message);
+                            FuriString* new_line = furi_string_alloc_set_str("\n\r");
+                            furi_string_cat(message, new_line);
+                            furi_string_cat(new_line, message);
+                            const char* c_message = furi_string_get_cstr(new_line);
                             furi_hal_cdc_send(usb_uart->cfg.vcp_ch, (uint8_t*)c_message, strlen(c_message));
+                            furi_string_free(new_line);
                         }
                         furi_string_free(message);
                         command_length = 0;
