@@ -13,7 +13,7 @@ static void yuricable_input_callback(InputEvent* input_event, FuriMessageQueue* 
 
 static void yuricable_render_callback(Canvas* canvas, void* ctx) {
     YuriCableContext* yuricable_context = ctx;
-    if (furi_mutex_acquire(yuricable_context->mutex, 200) != FuriStatusOk) {
+    if(furi_mutex_acquire(yuricable_context->mutex, 200) != FuriStatusOk) {
         return;
     }
     YuriCableData* data = yuricable_context->data;
@@ -22,7 +22,7 @@ static void yuricable_render_callback(Canvas* canvas, void* ctx) {
     canvas_set_font(canvas, FontPrimary);
     canvas_draw_str(canvas, 4, 13, "YuriCable Pro Max");
 
-    if (yuricable_context->data->sdq->listening) {
+    if(yuricable_context->data->sdq->listening) {
         IconAnimation* animation = icon_animation_alloc(&A_Round_loader_8x8);
         canvas_draw_icon_animation(canvas, 115, 4, animation);
         canvas_draw_box(canvas, 115, 4, 8, 8);
@@ -61,7 +61,7 @@ int32_t yuricable_pro_max_app(void* p) {
     UsbUartBridge* uartBridge = usb_uart_enable(&bridgeConfig);
 
     yuricable_context->data->sdq = sdq_device_alloc(&SDQ_PIN, uartBridge);
-    yuricable_context->data->sdq->runCommand = SDQDeviceCommand_CHARGING;
+    yuricable_context->data->sdq->runCommand = SDQDeviceCommand_DCSD;
 
     //  Set ViewPort callbacks
     ViewPort* view_port = view_port_alloc();
@@ -76,17 +76,17 @@ int32_t yuricable_pro_max_app(void* p) {
     Event event;
     bool processing = true;
     do {
-        if (furi_message_queue_get(yuricable_context->queue, &event, 1000) == FuriStatusOk) {
+        if(furi_message_queue_get(yuricable_context->queue, &event, 1000) == FuriStatusOk) {
             FURI_LOG_T(TAG, "Got event type: %d", event.type);
-            switch (event.type) {
+            switch(event.type) {
             case EventTypeKey:
                 // Short press of back button exits the program.
-                if (event.input.type == InputTypeShort && event.input.key == InputKeyBack) {
+                if(event.input.type == InputTypeShort && event.input.key == InputKeyBack) {
                     FURI_LOG_I(TAG, "Short-Back pressed. Exiting program.");
                     processing = false;
-                } else if (event.input.type == InputTypeShort && event.input.key == InputKeyOk) {
+                } else if(event.input.type == InputTypeShort && event.input.key == InputKeyOk) {
                     FURI_LOG_I(TAG, "Pressed Enter Key");
-                    if (!yuricable_context->data->sdq->listening) {
+                    if(!yuricable_context->data->sdq->listening) {
                         sdq_device_start(yuricable_context->data->sdq);
                         view_port_update(view_port);
                         FURI_LOG_I(TAG, "SDQ Device started");
@@ -95,14 +95,14 @@ int32_t yuricable_pro_max_app(void* p) {
                         view_port_update(view_port);
                         FURI_LOG_I(TAG, "SDQ Device stopped");
                     }
-                } else if (event.input.type == InputTypeShort && event.input.key == InputKeyUp) {
-                    if (yuricable_context->data->sdq->runCommand > 1) {
+                } else if(event.input.type == InputTypeShort && event.input.key == InputKeyUp) {
+                    if(yuricable_context->data->sdq->runCommand > 1) {
                         yuricable_context->data->sdq->runCommand--;
                         yuricable_context->data->sdq->commandExecuted = false;
                         view_port_update(view_port);
                     }
-                } else if (event.input.type == InputTypeShort && event.input.key == InputKeyDown) {
-                    if (yuricable_context->data->sdq->runCommand < SDQDeviceCommand_RECOVERY) {
+                } else if(event.input.type == InputTypeShort && event.input.key == InputKeyDown) {
+                    if(yuricable_context->data->sdq->runCommand < SDQDeviceCommand_RECOVERY) {
                         yuricable_context->data->sdq->runCommand++;
                         yuricable_context->data->sdq->commandExecuted = false;
                         view_port_update(view_port);
@@ -113,7 +113,7 @@ int32_t yuricable_pro_max_app(void* p) {
                 break;
             }
         }
-    } while (processing);
+    } while(processing);
 
     usb_uart_disable(uartBridge);
     free(uartBridge);
