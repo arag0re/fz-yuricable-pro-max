@@ -309,12 +309,15 @@ static int32_t usb_uart_tx_thread(void* context) {
                 if (data[0] == '/' || is_command) {
                     is_command = true;
 
-                    memcpy(&command_buffer[command_length], data, len);
+                    furi_hal_cdc_send(usb_uart->cfg.vcp_ch, (uint8_t*)data, len);
+
+                    memcpy(command_buffer + command_length, data, len);
                     command_length += len;
 
                     if (data[len - 1] == 0xd) {
                         is_command = false;
-                        FuriString* message = usb_uart->commandCallback((const char*)command_buffer, usb_uart->commandContext);
+                        command_buffer[command_length - 1] = 0;
+                        FuriString* message = usb_uart->commandCallback((const char*)command_buffer + 1, usb_uart->commandContext);
                         if (message != NULL) {
                             const char* c_message = furi_string_get_cstr(message);
                             furi_hal_cdc_send(usb_uart->cfg.vcp_ch, (uint8_t*)c_message, strlen(c_message));
