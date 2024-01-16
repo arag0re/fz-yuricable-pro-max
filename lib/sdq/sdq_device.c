@@ -60,56 +60,61 @@ static bool sdq_device_wait_while_gpio_is(SDQDevice* bus, uint32_t time_us, cons
     uint32_t time_elapsed;
     do { //-V1044
         time_elapsed = DWT->CYCCNT - time_start;
-        if(furi_hal_gpio_read(bus->gpio_pin) != pin_value) {
+        if (furi_hal_gpio_read(bus->gpio_pin) != pin_value) {
             return time_ticks >= time_elapsed;
         }
-    } while(time_elapsed < time_ticks);
+    } while (time_elapsed < time_ticks);
     return false;
 }
 
 static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
     uint8_t command[4] = {0};
-    if(sdq_device_receive(bus, command, sizeof(command))) {
-        if(sdq_device_wait_while_gpio_is(bus, bus->timings.BREAK_meaningful_max, false)) {
-            switch(command[0]) {
+    if (sdq_device_receive(bus, command, sizeof(command))) {
+        if (sdq_device_wait_while_gpio_is(bus, bus->timings.BREAK_meaningful_max, false)) {
+            switch (command[0]) {
             case TRISTAR_POLL:
-                switch(bus->runCommand) {
+                switch (bus->runCommand) {
                 case SDQDeviceCommand_NONE:
                     bus->commandExecuted = true;
                     break;
+                case SDQDeviceCommand_RESET:
+                    if (sdq_device_send(bus, responses.RESET_DEVICE, sizeof(responses.RESET_DEVICE))) {
+                        bus->commandExecuted = true;
+                    }
+                    break;
                 case SDQDeviceCommand_DFU:
-                    if(bus->resetInProgress) {
-                        if(sdq_device_send(bus, responses.DFU, sizeof(responses.DFU))) {
+                    if (bus->resetInProgress) {
+                        if (sdq_device_send(bus, responses.DFU, sizeof(responses.DFU))) {
                             bus->resetInProgress = false;
                             bus->commandExecuted = true;
                         }
                     } else {
-                        if(sdq_device_send(bus, responses.RESET_DEVICE, sizeof(responses.RESET_DEVICE))) {
+                        if (sdq_device_send(bus, responses.RESET_DEVICE, sizeof(responses.RESET_DEVICE))) {
                             bus->resetInProgress = true;
                         }
                     }
                     break;
                 case SDQDeviceCommand_DCSD:
-                    if(bus->resetInProgress) {
-                        if(sdq_device_send(bus, responses.USB_UART, sizeof(responses.USB_UART))) {
+                    if (bus->resetInProgress) {
+                        if (sdq_device_send(bus, responses.USB_UART, sizeof(responses.USB_UART))) {
                             bus->resetInProgress = false;
                             bus->commandExecuted = true;
                         }
                     } else {
-                        if(sdq_device_send(bus, responses.RESET_DEVICE, sizeof(responses.RESET_DEVICE))) {
+                        if (sdq_device_send(bus, responses.RESET_DEVICE, sizeof(responses.RESET_DEVICE))) {
                             bus->resetInProgress = true;
                         }
                     }
                     break;
                 case SDQDeviceCommand_CHARGING:
-                    if(sdq_device_send(bus, responses.USB_A_CHARGING_CABLE, sizeof(responses.USB_A_CHARGING_CABLE))) {
+                    if (sdq_device_send(bus, responses.USB_A_CHARGING_CABLE, sizeof(responses.USB_A_CHARGING_CABLE))) {
                         bus->commandExecuted = true;
                     }
                     break;
                 case SDQDeviceCommand_JTAG:
                     break;
                 case SDQDeviceCommand_RECOVERY:
-                    if(sdq_device_send(bus, responses.USB_UART, sizeof(responses.USB_UART))) {
+                    if (sdq_device_send(bus, responses.USB_UART, sizeof(responses.USB_UART))) {
                         usb_uart_send_data(bus->uart_bridge, RECOVERY_PLIST, sizeof(RECOVERY_PLIST));
                         bus->commandExecuted = true;
                     }
@@ -134,7 +139,7 @@ static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
 
 static inline bool sdq_device_bus_start(SDQDevice* bus) {
     bus->connected = true;
-    while(sdq_device_receive_and_process_command(bus))
+    while (sdq_device_receive_and_process_command(bus))
         ;
     const bool result = (bus->error == SDQDeviceErrorNone);
     bus->connected = false;
@@ -145,8 +150,8 @@ static void sdq_device_exti_callback(void* context) {
     SDQDevice* bus = context;
     FURI_CRITICAL_ENTER();
     furi_hal_gpio_init(bus->gpio_pin, GpioModeOutputOpenDrain, GpioPullNo, GpioSpeedLow);
-    if(sdq_device_wait_while_gpio_is(bus, bus->timings.BREAK_meaningful_max - 8, false)) {
-        if(sdq_device_wait_while_gpio_is(bus, bus->timings.BREAK_recovery + 1, true)) {
+    if (sdq_device_wait_while_gpio_is(bus, bus->timings.BREAK_meaningful_max - 8, false)) {
+        if (sdq_device_wait_while_gpio_is(bus, bus->timings.BREAK_recovery + 1, true)) {
             sdq_device_bus_start(bus);
         }
     }
@@ -171,30 +176,30 @@ void sdq_device_stop(SDQDevice* bus) {
 uint8_t sdq_device_receive_bit(SDQDevice* bus, bool isLastBitofByte) {
     const SDQTimings* timings = &bus->timings;
     // wait while bus is low for one meaningful
-    if(sdq_device_wait_while_gpio_is(bus, timings->ONE_meaningful_max, false)) {
+    if (sdq_device_wait_while_gpio_is(bus, timings->ONE_meaningful_max, false)) {
         // wait while bus is high for one recovery
-        if(isLastBitofByte) {
-            if(sdq_device_wait_while_gpio_is(bus, timings->ONE_STOP_recovery, true)) {
+        if (isLastBitofByte) {
+            if (sdq_device_wait_while_gpio_is(bus, timings->ONE_STOP_recovery, true)) {
                 bus->error = SDQDeviceErrorNone;
                 return true;
             }
         } else {
-            if(sdq_device_wait_while_gpio_is(bus, timings->ONE_recovery, true)) {
+            if (sdq_device_wait_while_gpio_is(bus, timings->ONE_recovery, true)) {
                 bus->error = SDQDeviceErrorNone;
                 return true;
             }
         }
     }
     // wait while bus is low for zero meaningful
-    if(sdq_device_wait_while_gpio_is(bus, timings->ZERO_meaningful_max - timings->ONE_meaningful_max, false)) {
+    if (sdq_device_wait_while_gpio_is(bus, timings->ZERO_meaningful_max - timings->ONE_meaningful_max, false)) {
         // wait while bus is high for zero recovery
-        if(isLastBitofByte) {
-            if(sdq_device_wait_while_gpio_is(bus, timings->ZERO_STOP_recovery, true)) {
+        if (isLastBitofByte) {
+            if (sdq_device_wait_while_gpio_is(bus, timings->ZERO_STOP_recovery, true)) {
                 bus->error = SDQDeviceErrorNone;
                 return false;
             }
         } else {
-            if(sdq_device_wait_while_gpio_is(bus, timings->ZERO_recovery, true)) {
+            if (sdq_device_wait_while_gpio_is(bus, timings->ZERO_recovery, true)) {
                 bus->error = SDQDeviceErrorNone;
                 return false;
             }
@@ -206,14 +211,14 @@ uint8_t sdq_device_receive_bit(SDQDevice* bus, bool isLastBitofByte) {
 
 static void sdq_device_send_byte(SDQDevice* bus, uint8_t byte) {
     const SDQTimings* timings = &bus->timings;
-    for(uint8_t mask = 0x01; mask != 0; mask <<= 1) {
+    for (uint8_t mask = 0x01; mask != 0; mask <<= 1) {
         uint32_t meaningful_time = (mask & byte) ? timings->ONE_meaningful : timings->ZERO_meaningful;
         uint32_t recovery_time = (mask & byte) ? timings->ONE_recovery : timings->ZERO_recovery;
         furi_hal_gpio_write(bus->gpio_pin, false);
         furi_delay_us(meaningful_time - 1);
         furi_hal_gpio_write(bus->gpio_pin, true);
         // Add stop recovery time for the last bit in the byte
-        if(mask == 0x80) {
+        if (mask == 0x80) {
             recovery_time = (mask & byte) ? timings->ONE_STOP_recovery : timings->ZERO_STOP_recovery;
         }
         furi_delay_us(recovery_time - 1);
@@ -223,12 +228,12 @@ static void sdq_device_send_byte(SDQDevice* bus, uint8_t byte) {
 bool sdq_device_send(SDQDevice* bus, const uint8_t data[], size_t data_size) {
     const SDQTimings* timings = &bus->timings;
 
-    if(!bus->connected) {
+    if (!bus->connected) {
         bus->error = SDQDeviceErrorNotConnected;
         return false;
     }
 
-    for(size_t i = 0; i < data_size; ++i) {
+    for (size_t i = 0; i < data_size; ++i) {
         sdq_device_send_byte(bus, data[i]);
     }
     // Calculate and send CRC8
@@ -246,10 +251,10 @@ bool sdq_device_send(SDQDevice* bus, const uint8_t data[], size_t data_size) {
 
 bool sdq_device_receive(SDQDevice* bus, uint8_t data[], size_t data_size) {
     size_t bytes_received = 0;
-    for(; bytes_received < data_size; ++bytes_received) {
+    for (; bytes_received < data_size; ++bytes_received) {
         uint8_t value = 0;
-        for(uint8_t bit_mask = 0x01; bit_mask != 0; bit_mask <<= 1) {
-            if(sdq_device_receive_bit(bus, (bit_mask == 0x80)) && bus->error == SDQDeviceErrorNone) {
+        for (uint8_t bit_mask = 0x01; bit_mask != 0; bit_mask <<= 1) {
+            if (sdq_device_receive_bit(bus, (bit_mask == 0x80)) && bus->error == SDQDeviceErrorNone) {
                 value |= bit_mask;
             }
         }
@@ -258,11 +263,11 @@ bool sdq_device_receive(SDQDevice* bus, uint8_t data[], size_t data_size) {
 
     // Check CRC8
     uint8_t reduced_data[data_size - 1];
-    for(size_t i = 0; i < data_size - 1; ++i) {
+    for (size_t i = 0; i < data_size - 1; ++i) {
         reduced_data[i] = data[i];
     }
     uint8_t calculated_crc = crc_data(reduced_data, sizeof(reduced_data));
-    if(data[data_size - 1] != calculated_crc) {
+    if (data[data_size - 1] != calculated_crc) {
         bus->error = SDQDeviceErrorInvalidCommand;
         return false;
     }

@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#define COMMAND_LENGTH 1000
+
 typedef struct UsbUartBridge UsbUartBridge;
 
 typedef struct {
@@ -21,7 +23,7 @@ typedef struct {
     uint32_t baudrate_cur;
 } UsbUartState;
 
-typedef FuriString* (*UsbUartBridgeCommand)(const char* command, void* context);
+typedef FuriString* (*UsbUartBridgeCommand)(char* command, void* context);
 
 UsbUartBridge* usb_uart_enable(UsbUartConfig* cfg);
 

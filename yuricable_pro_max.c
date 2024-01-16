@@ -36,22 +36,65 @@ static void yuricable_render_callback(Canvas* canvas, void* ctx) {
 
     canvas_set_font(canvas, FontSecondary);
     canvas_draw_str(canvas, 4, 26, "DCSD - Bootlog");
-    canvas_draw_str(canvas, 4, 38, "JTAG / SWD");
+    //canvas_draw_str(canvas, 4, 38, "JTAG / SWD");
+    canvas_draw_str(canvas, 4, 38, "Reset");
     canvas_draw_str(canvas, 4, 50, "DFU");
-    canvas_draw_str(canvas, 4, 61, "Recovery");
+    //canvas_draw_str(canvas, 4, 61, "Recovery");
 
     canvas_draw_icon(canvas, 120, 7 + 12 * yuricable_context->data->sdq->runCommand, &I_ButtonLeft_4x7);
 
     furi_mutex_release(yuricable_context->mutex);
 }
 
-FuriString* yuricable_command_callback(const char* command, void* ctx) {
+FuriString* yuricable_command_callback(char* command, void* ctx) {
     YuriCableContext* yuricable_context = ctx;
     UNUSED(yuricable_context);
-    if (strcmp(command, "help") == 0) {
-        return furi_string_alloc_printf("Hi");
+    if (strcmp(command, "start") == 0) {
+        if (yuricable_context->data->sdq->listening) {
+            return furi_string_alloc_printf("already listening");
+        }
+        yuricable_context->data->sdq->listening = true;
+        Event event = {.type = EventTypeUpdateGUI};
+        furi_message_queue_put(yuricable_context->queue, &event, FuriWaitForever);
+        return furi_string_alloc_printf("started");
     }
-    return furi_string_alloc_printf("%s", command);
+    if (strcmp(command, "stop") == 0) {
+        if (!yuricable_context->data->sdq->listening) {
+            return furi_string_alloc_printf("already stopped");
+        }
+        yuricable_context->data->sdq->listening = false;
+        Event event = {.type = EventTypeUpdateGUI};
+        furi_message_queue_put(yuricable_context->queue, &event, FuriWaitForever);
+        return furi_string_alloc_printf("stopped");
+    }
+    if (strncmp(command, "mode", 4) == 0) {
+        if (command[4] == ' ') {
+            char* mode = command + 5;
+            if (strcmp(mode, "dfu") == 0) {
+                yuricable_context->data->sdq->runCommand = SDQDeviceCommand_DFU;
+                yuricable_context->data->sdq->commandExecuted = false;
+                Event event = {.type = EventTypeUpdateGUI};
+                furi_message_queue_put(yuricable_context->queue, &event, FuriWaitForever);
+                return furi_string_alloc_printf("set mode dfu");
+            }
+            if (strcmp(mode, "reset") == 0) {
+                yuricable_context->data->sdq->runCommand = SDQDeviceCommand_RESET;
+                yuricable_context->data->sdq->commandExecuted = false;
+                Event event = {.type = EventTypeUpdateGUI};
+                furi_message_queue_put(yuricable_context->queue, &event, FuriWaitForever);
+                return furi_string_alloc_printf("set mode reset");
+            }
+            if (strcmp(mode, "dcsd") == 0) {
+                yuricable_context->data->sdq->runCommand = SDQDeviceCommand_DCSD;
+                yuricable_context->data->sdq->commandExecuted = false;
+                Event event = {.type = EventTypeUpdateGUI};
+                furi_message_queue_put(yuricable_context->queue, &event, FuriWaitForever);
+                return furi_string_alloc_printf("set mode dcsd");
+            }
+        }
+        return furi_string_alloc_printf("use: /mode <dfu | reset | dcsd>");
+    }
+    return furi_string_alloc_printf("%s is no valid command", command);
 }
 
 int32_t yuricable_pro_max_app(void* p) {
@@ -111,14 +154,15 @@ int32_t yuricable_pro_max_app(void* p) {
                         view_port_update(view_port);
                     }
                 } else if (event.input.type == InputTypeShort && event.input.key == InputKeyDown) {
-                    if (yuricable_context->data->sdq->runCommand < SDQDeviceCommand_RECOVERY) {
+                    if (yuricable_context->data->sdq->runCommand < 3) {
                         yuricable_context->data->sdq->runCommand++;
                         yuricable_context->data->sdq->commandExecuted = false;
                         view_port_update(view_port);
                     }
                 }
                 break;
-            default:
+            case EventTypeUpdateGUI:
+                view_port_update(view_port);
                 break;
             }
         }

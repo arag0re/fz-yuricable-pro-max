@@ -292,7 +292,7 @@ static int32_t usb_uart_tx_thread(void* context) {
 
     bool is_command = false;
     size_t command_length = 0;
-    uint8_t command_buffer[USB_CDC_PKT_LEN] = {0};
+    uint8_t* command_buffer = malloc(COMMAND_LENGTH);
     uint8_t data[USB_CDC_PKT_LEN];
     while (1) {
         uint32_t events = furi_thread_flags_wait(WORKER_ALL_TX_EVENTS, FuriFlagWaitAny, FuriWaitForever);
@@ -308,24 +308,45 @@ static int32_t usb_uart_tx_thread(void* context) {
 
                 if (data[0] == '/' || is_command) {
                     is_command = true;
+                    bool write = false;
 
-                    furi_hal_cdc_send(usb_uart->cfg.vcp_ch, (uint8_t*)data, len);
+                    /*
+                     * todo Backspace Works but cant remove printed character in host terminal
+                    if (data[0] == 0x7f) {
+                        command_length--;
+                        command_buffer[command_length] = 0;
 
-                    memcpy(command_buffer + command_length, data, len);
-                    command_length += len;
+                        furi_hal_cdc_send(usb_uart->cfg.vcp_ch, data, len);
+                    } else {
+                     */
+                    if (command_length + len < COMMAND_LENGTH) {
+                        furi_hal_cdc_send(usb_uart->cfg.vcp_ch, data, len);
+
+                        memcpy(command_buffer + command_length, data, len);
+                        command_length += len;
+                        write = true;
+                    }
+                    //}
 
                     if (data[len - 1] == 0xd) {
                         is_command = false;
-                        command_buffer[command_length - 1] = 0;
-                        FuriString* message = usb_uart->commandCallback((const char*)command_buffer + 1, usb_uart->commandContext);
+                        if (write) {
+                            command_buffer[command_length - 1] = 0;
+                        }
+
+                        FuriString* message = usb_uart->commandCallback((char*)command_buffer + 1, usb_uart->commandContext);
                         if (message != NULL) {
                             FuriString* new_line = furi_string_alloc_set_str("\n\r");
                             furi_string_cat(message, new_line);
                             furi_string_cat(new_line, message);
+
                             const char* c_message = furi_string_get_cstr(new_line);
                             furi_hal_cdc_send(usb_uart->cfg.vcp_ch, (uint8_t*)c_message, strlen(c_message));
+
+                            free((char*)c_message);
                             furi_string_free(new_line);
                         }
+
                         furi_string_free(message);
                         command_length = 0;
                     }
@@ -351,6 +372,7 @@ static int32_t usb_uart_tx_thread(void* context) {
             }
         }
     }
+    free(command_buffer);
     return 0;
 }
 
