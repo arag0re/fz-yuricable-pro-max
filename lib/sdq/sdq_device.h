@@ -24,6 +24,7 @@ typedef struct {
     uint8_t USB_SPAM_JTAG[7];
     uint8_t USB_UART[7];
     uint8_t USB_A_CHARGING_CABLE[7];
+    uint8_t POWER_ANSWER[2];
 } TRISTART_RESPONSES;
 
 typedef enum {
@@ -32,7 +33,7 @@ typedef enum {
     SDQDeviceCommand_JTAG,
     SDQDeviceCommand_DFU,
     SDQDeviceCommand_RECOVERY,
-    SDQDeviceCommand_USB_A_CHARGING_CABLE,
+    SDQDeviceCommand_CHARGING,
 } SDQDeviceCommand;
 
 typedef struct {

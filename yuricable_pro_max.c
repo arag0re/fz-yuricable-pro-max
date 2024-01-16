@@ -61,7 +61,7 @@ int32_t yuricable_pro_max_app(void* p) {
     UsbUartBridge* uartBridge = usb_uart_enable(&bridgeConfig);
 
     yuricable_context->data->sdq = sdq_device_alloc(&SDQ_PIN, uartBridge);
-    yuricable_context->data->sdq->runCommand = SDQDeviceCommand_USB_A_CHARGING_CABLE;
+    yuricable_context->data->sdq->runCommand = SDQDeviceCommand_CHARGING;
 
     //  Set ViewPort callbacks
     ViewPort* view_port = view_port_alloc();
@@ -98,11 +98,13 @@ int32_t yuricable_pro_max_app(void* p) {
                 } else if (event.input.type == InputTypeShort && event.input.key == InputKeyUp) {
                     if (yuricable_context->data->sdq->runCommand > 1) {
                         yuricable_context->data->sdq->runCommand--;
+                        yuricable_context->data->sdq->commandExecuted = false;
                         view_port_update(view_port);
                     }
                 } else if (event.input.type == InputTypeShort && event.input.key == InputKeyDown) {
                     if (yuricable_context->data->sdq->runCommand < SDQDeviceCommand_RECOVERY) {
                         yuricable_context->data->sdq->runCommand++;
+                        yuricable_context->data->sdq->commandExecuted = false;
                         view_port_update(view_port);
                     }
                 }

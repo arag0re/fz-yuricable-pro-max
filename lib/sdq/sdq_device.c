@@ -27,7 +27,7 @@ const TRISTART_RESPONSES responses = {
     .USB_SPAM_JTAG = {0x75, 0xa0, 0x08, 0x10, 0x00, 0x00, 0x00},
     .USB_UART = {0x75, 0x20, 0x00, 0x10, 0x00, 0x00, 0x00},
     .USB_A_CHARGING_CABLE = {0x75, 0x10, 0x0c, 0x00, 0x00, 0x00, 0x00},
-};
+    .POWER_ANSWER = {0x71, 0x93}};
 
 uint8_t RECOVERY_PLIST[277] =
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\"><plist version=\"1.0\"><dict> <key>Label</key> <string>yuricable</string> <key>Request</key> <string>EnterRecovery</string> </dict></plist>";
@@ -70,9 +70,10 @@ static bool sdq_device_wait_while_gpio_is(SDQDevice* bus, uint32_t time_us, cons
 static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
     uint8_t command[4] = {0};
     if (sdq_device_receive(bus, command, sizeof(command))) {
-        switch (command[0]) {
-        case TRISTAR_POLL:
-            if (sdq_device_wait_while_gpio_is(bus, bus->timings.BREAK_meaningful_max, false)) {
+        if (sdq_device_wait_while_gpio_is(bus, bus->timings.BREAK_meaningful_max, false)) {
+            switch (command[0]) {
+            case TRISTAR_POLL:
+
                 switch (bus->runCommand) {
                 case SDQDeviceCommand_NONE:
                     bus->commandExecuted = true;
@@ -101,7 +102,7 @@ static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
                         }
                     }
                     break;
-                case SDQDeviceCommand_USB_A_CHARGING_CABLE:
+                case SDQDeviceCommand_CHARGING:
                     if (sdq_device_send(bus, responses.USB_A_CHARGING_CABLE, sizeof(responses.USB_A_CHARGING_CABLE))) {
                         bus->commandExecuted = true;
                     }
@@ -115,16 +116,14 @@ static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
                     }
                     break;
                 }
+                break;
+            case TRISTAR_UNKNOWN_76:
+                FURI_LOG_I("SDQ", "TRISTAR_UNKNOWN_76");
+                break;
+            case TRISTAR_POWER:
+                sdq_device_send(bus, responses.POWER_ANSWER, sizeof(responses.POWER_ANSWER));
+                break;
             }
-            break;
-        case TRISTAR_UNKNOWN_76:
-            FURI_LOG_I("SDQ", "TRISTAR_UNKNOWN_76");
-            break;
-        case TRISTAR_POWER:
-            FURI_LOG_I("SDQ", "TRISTAR_POWER");
-            break;
-        default:
-            break;
         }
     }
     return (bus->error != SDQDeviceErrorNone);
