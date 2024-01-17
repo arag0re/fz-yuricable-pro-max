@@ -345,9 +345,8 @@ static int32_t usb_uart_tx_thread(void* context) {
 
                             free((char*)c_message);
                             furi_string_free(new_line);
+                            furi_string_free(message);
                         }
-
-                        furi_string_free(message);
                         command_length = 0;
                     }
                     continue;

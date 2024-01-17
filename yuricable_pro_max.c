@@ -21,13 +21,7 @@ static void yuricable_render_callback(Canvas* canvas, void* ctx) {
     canvas_set_font(canvas, FontPrimary);
     canvas_draw_str(canvas, 4, 13, "YuriCable Pro Max");
 
-    if (yuricable_context->data->sdq->listening) {
-        IconAnimation* animation = icon_animation_alloc(&A_Round_loader_8x8);
-        canvas_draw_icon_animation(canvas, 115, 4, animation);
-        canvas_draw_box(canvas, 115, 4, 8, 8);
-    } else {
-        canvas_draw_icon(canvas, 115, 4, &I_Round_empty_8x8);
-    }
+    canvas_draw_icon_animation(canvas, 115, 4, yuricable_context->data->listeningAnimation);
 
     canvas_draw_line(canvas, 0, 16, 127, 16);
     canvas_draw_line(canvas, 0, 28, 127, 28);
@@ -53,18 +47,16 @@ FuriString* yuricable_command_callback(char* command, void* ctx) {
         if (yuricable_context->data->sdq->listening) {
             return furi_string_alloc_printf("already listening");
         }
-        yuricable_context->data->sdq->listening = true;
-        Event event = {.type = EventTypeUpdateGUI};
-        furi_message_queue_put(yuricable_context->queue, &event, FuriWaitForever);
+        sdq_device_start(yuricable_context->data->sdq);
+        icon_animation_start(yuricable_context->data->listeningAnimation);
         return furi_string_alloc_printf("started");
     }
     if (strcmp(command, "stop") == 0) {
         if (!yuricable_context->data->sdq->listening) {
             return furi_string_alloc_printf("already stopped");
         }
-        yuricable_context->data->sdq->listening = false;
-        Event event = {.type = EventTypeUpdateGUI};
-        furi_message_queue_put(yuricable_context->queue, &event, FuriWaitForever);
+        sdq_device_stop(yuricable_context->data->sdq);
+        icon_animation_stop(yuricable_context->data->listeningAnimation);
         return furi_string_alloc_printf("stopped");
     }
     if (strncmp(command, "mode", 4) == 0) {
@@ -73,22 +65,16 @@ FuriString* yuricable_command_callback(char* command, void* ctx) {
             if (strcmp(mode, "dfu") == 0) {
                 yuricable_context->data->sdq->runCommand = SDQDeviceCommand_DFU;
                 yuricable_context->data->sdq->commandExecuted = false;
-                Event event = {.type = EventTypeUpdateGUI};
-                furi_message_queue_put(yuricable_context->queue, &event, FuriWaitForever);
                 return furi_string_alloc_printf("set mode dfu");
             }
             if (strcmp(mode, "reset") == 0) {
                 yuricable_context->data->sdq->runCommand = SDQDeviceCommand_RESET;
                 yuricable_context->data->sdq->commandExecuted = false;
-                Event event = {.type = EventTypeUpdateGUI};
-                furi_message_queue_put(yuricable_context->queue, &event, FuriWaitForever);
                 return furi_string_alloc_printf("set mode reset");
             }
             if (strcmp(mode, "dcsd") == 0) {
                 yuricable_context->data->sdq->runCommand = SDQDeviceCommand_DCSD;
                 yuricable_context->data->sdq->commandExecuted = false;
-                Event event = {.type = EventTypeUpdateGUI};
-                furi_message_queue_put(yuricable_context->queue, &event, FuriWaitForever);
                 return furi_string_alloc_printf("set mode dcsd");
             }
         }
@@ -104,6 +90,7 @@ int32_t yuricable_pro_max_app(void* p) {
     YuriCableContext* yuricable_context = malloc(sizeof(YuriCableContext));
     yuricable_context->mutex = furi_mutex_alloc(FuriMutexTypeNormal);
     yuricable_context->data = malloc(sizeof(YuriCableData));
+    yuricable_context->data->listeningAnimation = icon_animation_alloc(&A_Round_loader_8x8);
 
     // Queue for events (tick or input)
     yuricable_context->queue = furi_message_queue_alloc(8, sizeof(Event));
@@ -128,7 +115,7 @@ int32_t yuricable_pro_max_app(void* p) {
     Event event;
     bool processing = true;
     do {
-        if (furi_message_queue_get(yuricable_context->queue, &event, 1000) == FuriStatusOk) {
+        if (furi_message_queue_get(yuricable_context->queue, &event, 300) == FuriStatusOk) {
             FURI_LOG_T(TAG, "Got event type: %d", event.type);
             switch (event.type) {
             case EventTypeKey:
@@ -140,38 +127,35 @@ int32_t yuricable_pro_max_app(void* p) {
                     FURI_LOG_I(TAG, "Pressed Enter Key");
                     if (!yuricable_context->data->sdq->listening) {
                         sdq_device_start(yuricable_context->data->sdq);
-                        view_port_update(view_port);
-                        FURI_LOG_I(TAG, "SDQ Device started");
+                        icon_animation_start(yuricable_context->data->listeningAnimation);
                     } else {
                         sdq_device_stop(yuricable_context->data->sdq);
-                        view_port_update(view_port);
-                        FURI_LOG_I(TAG, "SDQ Device stopped");
+                        icon_animation_stop(yuricable_context->data->listeningAnimation);
                     }
                 } else if (event.input.type == InputTypeShort && event.input.key == InputKeyUp) {
                     if (yuricable_context->data->sdq->runCommand > 1) {
                         yuricable_context->data->sdq->runCommand--;
                         yuricable_context->data->sdq->commandExecuted = false;
-                        view_port_update(view_port);
                     }
                 } else if (event.input.type == InputTypeShort && event.input.key == InputKeyDown) {
                     if (yuricable_context->data->sdq->runCommand < 3) {
                         yuricable_context->data->sdq->runCommand++;
                         yuricable_context->data->sdq->commandExecuted = false;
-                        view_port_update(view_port);
                     }
                 }
                 break;
-            case EventTypeUpdateGUI:
-                view_port_update(view_port);
-                break;
             }
         }
+
+        view_port_update(view_port);
     } while (processing);
 
     usb_uart_disable(uartBridge);
     free(uartBridge);
 
     sdq_device_free(yuricable_context->data->sdq);
+    icon_animation_free(yuricable_context->data->listeningAnimation);
+    free(yuricable_context->data);
     free(yuricable_context);
 
     furi_hal_gpio_init(&SDQ_PIN, GpioModeOutputOpenDrain, GpioPullNo, GpioSpeedLow);
