@@ -80,6 +80,9 @@ FuriString* yuricable_command_callback(char* command, void* ctx) {
         }
         return furi_string_alloc_printf("use: /mode <dfu | reset | dcsd>");
     }
+    if (strncmp(command, "help", 4) == 0) {
+        return furi_string_alloc_printf("commands:\r\n/start\r\n/stop\r\n/mode <dfu | reset | dcsd>");
+    }
     return furi_string_alloc_printf("%s is no valid command", command);
 }
 

@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#define COMMAND_LENGTH 1000
+#define COMMAND_LENGTH 16
 
 typedef struct UsbUartBridge UsbUartBridge;
 
