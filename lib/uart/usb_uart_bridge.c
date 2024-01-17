@@ -168,7 +168,7 @@ static int32_t usb_uart_worker(void* context) {
     usb_uart->tx_sem = furi_semaphore_alloc(1, 1);
     usb_uart->usb_mutex = furi_mutex_alloc(FuriMutexTypeNormal);
 
-    usb_uart->tx_thread = furi_thread_alloc_ex("UsbUartTxWorker", 512, usb_uart_tx_thread, usb_uart);
+    usb_uart->tx_thread = furi_thread_alloc_ex("UsbUartTxWorker", 2048, usb_uart_tx_thread, usb_uart);
 
     usb_uart_vcp_init(usb_uart, usb_uart->cfg.vcp_ch);
     usb_uart_serial_init(usb_uart, usb_uart->cfg.uart_ch);
@@ -307,12 +307,6 @@ static int32_t usb_uart_tx_thread(void* context) {
             if (len > 0) {
                 usb_uart->st.tx_cnt += len;
 
-                if (data[0] == 0x01) {
-                    furi_delay_ms(33);
-                    furi_hal_cdc_send(usb_uart->cfg.vcp_ch, (uint8_t*)MOTD_ASCII_ART, sizeof(MOTD_ASCII_ART));
-                    continue;
-                }
-
                 if (data[0] == '/' || is_command) {
                     is_command = true;
                     bool write = false;
@@ -382,6 +376,18 @@ static int32_t usb_uart_tx_thread(void* context) {
     return 0;
 }
 
+void usb_uart_print_motd(UsbUartBridge* usb_uart) {
+    furi_delay_ms(160);
+    size_t l = 10;
+    for (size_t i = 0; i < sizeof(MOTD_ASCII_ART); i += l) {
+        if (i + l > sizeof(MOTD_ASCII_ART)) {
+            l = sizeof(MOTD_ASCII_ART) - i;
+        }
+        furi_hal_cdc_send(usb_uart->cfg.vcp_ch, (uint8_t*)MOTD_ASCII_ART + i, l);
+        furi_delay_us(500);
+    }
+}
+
 /* VCP callbacks */
 
 static void vcp_on_cdc_tx_complete(void* context) {
@@ -403,7 +409,7 @@ static void vcp_on_cdc_control_line(void* context, uint8_t state) {
     UNUSED(state);
     UsbUartBridge* usb_uart = (UsbUartBridge*)context;
     furi_thread_flags_set(furi_thread_get_id(usb_uart->thread), WorkerEvtCtrlLineSet);
-    furi_thread_flags_set(furi_thread_get_id(usb_uart->tx_thread), WorkerEvtCdcRx);
+    usb_uart_print_motd(usb_uart);
 }
 
 static void vcp_on_line_config(void* context, struct usb_cdc_line_coding* config) {
