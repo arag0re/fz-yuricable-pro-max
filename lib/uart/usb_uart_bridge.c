@@ -53,6 +53,9 @@ struct UsbUartBridge {
 
     FuriSemaphore* tx_sem;
 
+    UsbUartBridgeCommand commandCallback;
+    void* commandContext;
+
     UsbUartState st;
 
     FuriApiLock cfg_lock;
@@ -287,6 +290,9 @@ static int32_t usb_uart_worker(void* context) {
 static int32_t usb_uart_tx_thread(void* context) {
     UsbUartBridge* usb_uart = (UsbUartBridge*)context;
 
+    bool is_command = false;
+    size_t command_length = 0;
+    uint8_t* command_buffer = malloc(COMMAND_LENGTH);
     uint8_t data[USB_CDC_PKT_LEN];
     while (1) {
         uint32_t events = furi_thread_flags_wait(WORKER_ALL_TX_EVENTS, FuriFlagWaitAny, FuriWaitForever);
@@ -299,6 +305,52 @@ static int32_t usb_uart_tx_thread(void* context) {
 
             if (len > 0) {
                 usb_uart->st.tx_cnt += len;
+
+                if (data[0] == '/' || is_command) {
+                    is_command = true;
+                    bool write = false;
+
+                    /*
+                     * todo Backspace Works but cant remove printed character in host terminal
+                    if (data[0] == 0x7f) {
+                        command_length--;
+                        command_buffer[command_length] = 0;
+
+                        furi_hal_cdc_send(usb_uart->cfg.vcp_ch, data, len);
+                    } else {
+                     */
+                    if (command_length + len < COMMAND_LENGTH) {
+                        furi_hal_cdc_send(usb_uart->cfg.vcp_ch, data, len);
+
+                        memcpy(command_buffer + command_length, data, len);
+                        command_length += len;
+                        write = true;
+                    }
+                    //}
+
+                    if (data[len - 1] == 0xd) {
+                        is_command = false;
+                        if (write) {
+                            command_buffer[command_length - 1] = 0;
+                        }
+
+                        FuriString* message = usb_uart->commandCallback((char*)command_buffer + 1, usb_uart->commandContext);
+                        if (message != NULL) {
+                            FuriString* new_line = furi_string_alloc_set_str("\n\r");
+                            furi_string_cat(message, new_line);
+                            furi_string_cat(new_line, message);
+
+                            const char* c_message = furi_string_get_cstr(new_line);
+                            furi_hal_cdc_send(usb_uart->cfg.vcp_ch, (uint8_t*)c_message, strlen(c_message));
+
+                            free((char*)c_message);
+                            furi_string_free(new_line);
+                            furi_string_free(message);
+                        }
+                        command_length = 0;
+                    }
+                    continue;
+                }
 
                 if (usb_uart->cfg.software_de_re != 0) furi_hal_gpio_write(USB_USART_DE_RE_PIN, false);
 
@@ -319,6 +371,7 @@ static int32_t usb_uart_tx_thread(void* context) {
             }
         }
     }
+    free(command_buffer);
     return 0;
 }
 
@@ -377,6 +430,14 @@ void usb_uart_set_config(UsbUartBridge* usb_uart, UsbUartConfig* cfg) {
     memcpy(&(usb_uart->cfg_new), cfg, sizeof(UsbUartConfig));
     furi_thread_flags_set(furi_thread_get_id(usb_uart->thread), WorkerEvtCfgChange);
     api_lock_wait_unlock_and_free(usb_uart->cfg_lock);
+}
+
+void usb_uart_set_command_callback(UsbUartBridge* usb_uart, UsbUartBridgeCommand callback, void* context) {
+    furi_assert(usb_uart);
+    furi_assert(callback);
+    furi_assert(context);
+    usb_uart->commandCallback = callback;
+    usb_uart->commandContext = context;
 }
 
 void usb_uart_get_config(UsbUartBridge* usb_uart, UsbUartConfig* cfg) {

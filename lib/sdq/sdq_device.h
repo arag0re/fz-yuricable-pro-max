@@ -30,10 +30,11 @@ typedef struct {
 typedef enum {
     SDQDeviceCommand_NONE = 0,
     SDQDeviceCommand_DCSD,
-    SDQDeviceCommand_JTAG,
+    SDQDeviceCommand_RESET,
     SDQDeviceCommand_DFU,
-    SDQDeviceCommand_RECOVERY,
     SDQDeviceCommand_CHARGING,
+    SDQDeviceCommand_JTAG,
+    SDQDeviceCommand_RECOVERY,
 } SDQDeviceCommand;
 
 typedef struct {

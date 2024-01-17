@@ -1,9 +1,9 @@
 #pragma once
 
 #include <gui/gui.h>
-#include <lib/sdq/sdq_device.c>
+#include "lib/sdq/sdq_device.c"
 
-typedef enum { EventTypeKey, EventTypeUpdateGUI } EventType;
+typedef enum { EventTypeKey } EventType;
 
 typedef struct {
     EventType type; // The reason for this event.
@@ -13,6 +13,7 @@ typedef struct {
 
 typedef struct {
     SDQDevice* sdq;
+    IconAnimation* listeningAnimation;
     // You can add additional state here.
 } YuriCableData;
 
