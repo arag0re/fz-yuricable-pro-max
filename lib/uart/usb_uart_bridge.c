@@ -5,6 +5,7 @@
 #include <toolbox/api_lock.h>
 #include <furi_hal.h>
 #include <furi_hal_usb_cdc.h>
+#include "yuricable_pro_max_asciiart.h"
 
 //TODO: FL-3276 port to new USART API
 #include <stm32wbxx_ll_lpuart.h>
@@ -306,27 +307,31 @@ static int32_t usb_uart_tx_thread(void* context) {
             if (len > 0) {
                 usb_uart->st.tx_cnt += len;
 
+                if (data[0] == 0x01) {
+                    furi_delay_ms(33);
+                    furi_hal_cdc_send(usb_uart->cfg.vcp_ch, (uint8_t*)MOTD_ASCII_ART, sizeof(MOTD_ASCII_ART));
+                    continue;
+                }
+
                 if (data[0] == '/' || is_command) {
                     is_command = true;
                     bool write = false;
 
-                    /*
-                     * todo Backspace Works but cant remove printed character in host terminal
                     if (data[0] == 0x7f) {
                         command_length--;
                         command_buffer[command_length] = 0;
 
-                        furi_hal_cdc_send(usb_uart->cfg.vcp_ch, data, len);
+                        uint8_t backspace[7] = {0x1B, 0x5B, 0x44, 0x1B, 0x5B, 0x31, 0x50};
+                        furi_hal_cdc_send(usb_uart->cfg.vcp_ch, backspace, sizeof(backspace));
                     } else {
-                     */
-                    if (command_length + len < COMMAND_LENGTH) {
-                        furi_hal_cdc_send(usb_uart->cfg.vcp_ch, data, len);
+                        if (command_length + len < COMMAND_LENGTH) {
+                            furi_hal_cdc_send(usb_uart->cfg.vcp_ch, data, len);
 
-                        memcpy(command_buffer + command_length, data, len);
-                        command_length += len;
-                        write = true;
+                            memcpy(command_buffer + command_length, data, len);
+                            command_length += len;
+                            write = true;
+                        }
                     }
-                    //}
 
                     if (data[len - 1] == 0xd) {
                         is_command = false;
