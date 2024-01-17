@@ -318,11 +318,13 @@ static int32_t usb_uart_tx_thread(void* context) {
                     bool write = false;
 
                     if (data[0] == 0x7f) {
-                        command_length--;
-                        command_buffer[command_length] = 0;
+                        if (command_length > 0) {
+                            command_length--;
+                            command_buffer[command_length] = 0;
 
-                        uint8_t backspace[7] = {0x1B, 0x5B, 0x44, 0x1B, 0x5B, 0x31, 0x50};
-                        furi_hal_cdc_send(usb_uart->cfg.vcp_ch, backspace, sizeof(backspace));
+                            uint8_t backspace[7] = {0x1B, 0x5B, 0x44, 0x1B, 0x5B, 0x31, 0x50};
+                            furi_hal_cdc_send(usb_uart->cfg.vcp_ch, backspace, sizeof(backspace));
+                        }
                     } else {
                         if (command_length + len < COMMAND_LENGTH) {
                             furi_hal_cdc_send(usb_uart->cfg.vcp_ch, data, len);
@@ -401,6 +403,7 @@ static void vcp_on_cdc_control_line(void* context, uint8_t state) {
     UNUSED(state);
     UsbUartBridge* usb_uart = (UsbUartBridge*)context;
     furi_thread_flags_set(furi_thread_get_id(usb_uart->thread), WorkerEvtCtrlLineSet);
+    furi_thread_flags_set(furi_thread_get_id(usb_uart->tx_thread), WorkerEvtCdcRx);
 }
 
 static void vcp_on_line_config(void* context, struct usb_cdc_line_coding* config) {
