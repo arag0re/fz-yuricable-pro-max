@@ -5,6 +5,7 @@
 #include <toolbox/api_lock.h>
 #include <furi_hal.h>
 #include <furi_hal_usb_cdc.h>
+#include "yuricable_pro_max_asciiart.h"
 
 //TODO: FL-3276 port to new USART API
 #include <stm32wbxx_ll_lpuart.h>
@@ -167,7 +168,7 @@ static int32_t usb_uart_worker(void* context) {
     usb_uart->tx_sem = furi_semaphore_alloc(1, 1);
     usb_uart->usb_mutex = furi_mutex_alloc(FuriMutexTypeNormal);
 
-    usb_uart->tx_thread = furi_thread_alloc_ex("UsbUartTxWorker", 512, usb_uart_tx_thread, usb_uart);
+    usb_uart->tx_thread = furi_thread_alloc_ex("UsbUartTxWorker", 2048, usb_uart_tx_thread, usb_uart);
 
     usb_uart_vcp_init(usb_uart, usb_uart->cfg.vcp_ch);
     usb_uart_serial_init(usb_uart, usb_uart->cfg.uart_ch);
@@ -310,23 +311,23 @@ static int32_t usb_uart_tx_thread(void* context) {
                     is_command = true;
                     bool write = false;
 
-                    /*
-                     * todo Backspace Works but cant remove printed character in host terminal
                     if (data[0] == 0x7f) {
-                        command_length--;
-                        command_buffer[command_length] = 0;
+                        if (command_length > 0) {
+                            command_length--;
+                            command_buffer[command_length] = 0;
 
-                        furi_hal_cdc_send(usb_uart->cfg.vcp_ch, data, len);
+                            uint8_t backspace[7] = {0x1B, 0x5B, 0x44, 0x1B, 0x5B, 0x31, 0x50};
+                            furi_hal_cdc_send(usb_uart->cfg.vcp_ch, backspace, sizeof(backspace));
+                        }
                     } else {
-                     */
-                    if (command_length + len < COMMAND_LENGTH) {
-                        furi_hal_cdc_send(usb_uart->cfg.vcp_ch, data, len);
+                        if (command_length + len < COMMAND_LENGTH) {
+                            furi_hal_cdc_send(usb_uart->cfg.vcp_ch, data, len);
 
-                        memcpy(command_buffer + command_length, data, len);
-                        command_length += len;
-                        write = true;
+                            memcpy(command_buffer + command_length, data, len);
+                            command_length += len;
+                            write = true;
+                        }
                     }
-                    //}
 
                     if (data[len - 1] == 0xd) {
                         is_command = false;
@@ -375,6 +376,18 @@ static int32_t usb_uart_tx_thread(void* context) {
     return 0;
 }
 
+void usb_uart_print_motd(UsbUartBridge* usb_uart) {
+    furi_delay_ms(160);
+    size_t l = 10;
+    for (size_t i = 0; i < sizeof(MOTD_ASCII_ART); i += l) {
+        if (i + l > sizeof(MOTD_ASCII_ART)) {
+            l = sizeof(MOTD_ASCII_ART) - i;
+        }
+        furi_hal_cdc_send(usb_uart->cfg.vcp_ch, (uint8_t*)MOTD_ASCII_ART + i, l);
+        furi_delay_us(500);
+    }
+}
+
 /* VCP callbacks */
 
 static void vcp_on_cdc_tx_complete(void* context) {
@@ -396,6 +409,7 @@ static void vcp_on_cdc_control_line(void* context, uint8_t state) {
     UNUSED(state);
     UsbUartBridge* usb_uart = (UsbUartBridge*)context;
     furi_thread_flags_set(furi_thread_get_id(usb_uart->thread), WorkerEvtCtrlLineSet);
+    usb_uart_print_motd(usb_uart);
 }
 
 static void vcp_on_line_config(void* context, struct usb_cdc_line_coding* config) {
