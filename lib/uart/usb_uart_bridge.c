@@ -158,6 +158,18 @@ static void usb_uart_update_ctrl_lines(UsbUartBridge* usb_uart) {
     }
 }
 
+void usb_uart_print_motd(UsbUartBridge* usb_uart) {
+    furi_delay_ms(100);
+    size_t l = 10;
+    for (size_t i = 0; i < sizeof(MOTD_ASCII_ART); i += l) {
+        if (i + l > sizeof(MOTD_ASCII_ART)) {
+            l = sizeof(MOTD_ASCII_ART) - i;
+        }
+        furi_hal_cdc_send(usb_uart->cfg.vcp_ch, (uint8_t*)MOTD_ASCII_ART + i, l);
+        furi_delay_us(500);
+    }
+}
+
 static int32_t usb_uart_worker(void* context) {
     UsbUartBridge* usb_uart = (UsbUartBridge*)context;
 
@@ -260,6 +272,7 @@ static int32_t usb_uart_worker(void* context) {
         }
         if (events & WorkerEvtCtrlLineSet) {
             usb_uart_update_ctrl_lines(usb_uart);
+            usb_uart_print_motd(usb_uart);
         }
     }
     usb_uart_vcp_deinit(usb_uart, usb_uart->cfg.vcp_ch);
@@ -377,18 +390,6 @@ static int32_t usb_uart_tx_thread(void* context) {
     return 0;
 }
 
-void usb_uart_print_motd(UsbUartBridge* usb_uart) {
-    furi_delay_ms(160);
-    size_t l = 10;
-    for (size_t i = 0; i < sizeof(MOTD_ASCII_ART); i += l) {
-        if (i + l > sizeof(MOTD_ASCII_ART)) {
-            l = sizeof(MOTD_ASCII_ART) - i;
-        }
-        furi_hal_cdc_send(usb_uart->cfg.vcp_ch, (uint8_t*)MOTD_ASCII_ART + i, l);
-        furi_delay_us(500);
-    }
-}
-
 /* VCP callbacks */
 
 static void vcp_on_cdc_tx_complete(void* context) {
@@ -410,7 +411,6 @@ static void vcp_on_cdc_control_line(void* context, uint8_t state) {
     UNUSED(state);
     UsbUartBridge* usb_uart = (UsbUartBridge*)context;
     furi_thread_flags_set(furi_thread_get_id(usb_uart->thread), WorkerEvtCtrlLineSet);
-    usb_uart_print_motd(usb_uart);
 }
 
 static void vcp_on_line_config(void* context, struct usb_cdc_line_coding* config) {
