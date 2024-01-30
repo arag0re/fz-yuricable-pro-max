@@ -6,12 +6,12 @@ Implementation to use a Flipper-Zero as SWD/DCSD-Cable for iPhones just like kno
 
 ## Tested iPhones:
 
-| iPhone      | DCSD | Reset | DFU |
-| ----------- | --- | ------ | --- |
-| 14 Pro Max  |  ✅  |  ✅  |  ✅  |
-| 14 Pro      |  ✅  |  ✅  |  ✅  |
-| SE (2022)   |  ✅  |  ✅  |  ✅  |
-| XS          |  ❌  |  ❌  |  ❌  |
+| iPhone      | DCSD | Reset | DFU | JTAG |
+| ----------- | --- | ------ | --- | ---- |
+| 14 Pro Max  |  ✅  |  ✅  |  ✅  |  ❌   |
+| 14 Pro      |  ✅  |  ✅  |  ✅  |  ❌   |
+| SE (2022)   |  ✅  |  ✅  |  ✅  |  ❌   |
+| XS          |  ❌  |  ❌  |  ❌  |  ❌   |
 
 ## Thanks
 
