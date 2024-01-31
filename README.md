@@ -68,18 +68,18 @@ ufbt faps vscode_dist
 ```shell
 ufbt vscode_dist
 ```
-+ then builf it using the commands in section `Build FAP`
++ then build it using the commands in section `Build FAP`
 
 
 ### Build FAP
 
-Navigiere in das Rootverzeichnis der App und führe dort nach installation von ufbt folgenden Befehl aus:
+NAviagte to the root-folder of this project and execute the following command to build the app from src:
 
 ```shell
 ufbt
 ```
 
-Die `.fap`-Datei liegt dann im `./dist`-Ordner
+The `.fap`-File is located in `./dist`-Folder after successful build
 
 ### Build FAP, upload to Flipper & launch
 
