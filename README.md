@@ -35,11 +35,66 @@ watch [here](https://www.youtube.com/watch?v=8p3Oi4DL0eI&list=PL0P69gP-VL8eSCSNY
 
 ## Project Setup
 
-### Create .vscode
+### Install Build-Tool
 
+```shell
+python -m pip install --upgrade ufbt
+```
+
+### Update Firmware to latest firmware if already installed
+
++ Download Update
+
+```shell
+ufbt update --channel=release
+```
+
+#### Build App and flash firmware including the app to the flipper  
+
++ Flash Firmware to the Flipper
+
+```shell
+ufbt flash_usb
+```
+
++ VSCode setup and build
+
+```shell
+ufbt faps vscode_dist
+```
+
++ if it doesnt work, use only setup-command:
+  
 ```shell
 ufbt vscode_dist
 ```
++ then builf it using the commands in section `Build FAP`
+
+
+### Build FAP
+
+Navigiere in das Rootverzeichnis der App und führe dort nach installation von ufbt folgenden Befehl aus:
+
+```shell
+ufbt
+```
+
+Die `.fap`-Datei liegt dann im `./dist`-Ordner
+
+### Build FAP, upload to Flipper & launch
+
+```shell
+ufbt launch
+```
+
+## Pinout Flipper / Lightning Breakout
+| Cable | Flipper |
+| ----- | ------- |
+| Yellow (ID0) | PA7 (PIN 2) |
+| Blue   (ID1) | PA6 (PIN 3) |
+| Black  (GND) | GND (PIN 8) |
+| Purple (L1n) | TX  (PIN 13) |
+| Orange (L1p) | RX  (PIN 14) |
 
 ### Open in CLion
 
@@ -66,54 +121,6 @@ Female Port Pinout
 USB UART Pinout
 
 ![](docs/Connector1.jpg)
-
-## Build
-
-### Build-Tool
-
-#### Install Build-Tool
-
-```shell
-python -m pip install --upgrade ufbt
-```
-
-#### Update Firmware
-
-+ Download Update
-
-```shell
-ufbt update --channel=release
-```
-
-#### Build App FLash it
-
-+ Upload to Flipper
-
-```shell
-ufbt flash_usb
-```
-
-+ VSCode setup and build
-
-```shell
-ufbt faps vscode_dist
-```
-
-#### Build FAP
-
-Navigiere in das Rootverzeichnis der App und führe dort nach installation von ufbt folgenden Befehl aus:
-
-```shell
-ufbt
-```
-
-Die `.fap`-Datei liegt dann im `./dist`-Ordner
-
-#### Auto Launch
-
-```shell
-ufbt launch
-```
 
 ## Debug
 
