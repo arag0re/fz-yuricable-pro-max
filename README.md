@@ -4,13 +4,97 @@ Implementation to use a Flipper-Zero as SWD/DCSD-Cable for iPhones just like kno
 
 > ![](docs/YuriCableLogo.svg)
 
+## Tested iPhones:
+
+| iPhone      | DCSD | Reset | DFU | JTAG |
+| ----------- | --- | ------ | --- | ---- |
+| 14 Pro Max  |  ✅  |  ✅  |  ✅  |  ❌   |
+| 14 Pro      |  ✅  |  ✅  |  ✅  |  ❌   |
+| SE (2022)   |  ✅  |  ✅  |  ✅  |  ❌   |
+| XS          |  ❌  |  ❌  |  ❌  |  ❌   |
+
+## Thanks
+
+### SDQ
+
+Here some specs about the protocol used:
+
++ Name: SDQ (IDBUS) developed by Texas Instruments
++ Source: [Reversed Protocol](https://nyansatan.github.io/lightning/)
+
+Credits for SDQ reverse engineering to [@nyansatan](https://github.com/nyansatan)
+
+### Tamarin Cable Implementation
+
++ [Tamarin Firmware](https://github.com/stacksmashing/tamarin-firmware)
+
+Credits to [@stacksmashing](https://github.com/stacksmashing) for an example pi pico implementation and his defcon talk
+on this subject. (
+watch [here](https://www.youtube.com/watch?v=8p3Oi4DL0eI&list=PL0P69gP-VL8eSCSNY-gQefgY1DXBSlNJC&index=6&))
+
+
 ## Project Setup
 
-### Create .vscode
+### Install Build-Tool
 
+```shell
+python -m pip install --upgrade ufbt
+```
+
+### Update Firmware to latest firmware if already installed
+
++ Download Update
+
+```shell
+ufbt update --channel=release
+```
+
+#### Build App and flash firmware including the app to the flipper  
+
++ Flash Firmware to the Flipper
+
+```shell
+ufbt flash_usb
+```
+
++ VSCode setup and build
+
+```shell
+ufbt faps vscode_dist
+```
+
++ if it doesnt work, use only setup-command:
+  
 ```shell
 ufbt vscode_dist
 ```
++ then build it using the commands in section `Build FAP`
+
+
+### Build FAP
+
+NAviagte to the root-folder of this project and execute the following command to build the app from src:
+
+```shell
+ufbt
+```
+
+The `.fap`-File is located in `./dist`-Folder after successful build
+
+### Build FAP, upload to Flipper & launch
+
+```shell
+ufbt launch
+```
+
+## Pinout Flipper / Lightning Breakout
+| Cable | Flipper |
+| ----- | ------- |
+| Yellow (ID0) | PA7 (PIN 2) |
+| Blue   (ID1) | PA6 (PIN 3) |
+| Black  (GND) | GND (PIN 8) |
+| Purple (L1n) | TX  (PIN 13) |
+| Orange (L1p) | RX  (PIN 14) |
 
 ### Open in CLion
 
@@ -37,54 +121,6 @@ Female Port Pinout
 USB UART Pinout
 
 ![](docs/Connector1.jpg)
-
-## Build
-
-### Build-Tool
-
-#### Install Build-Tool
-
-```shell
-python -m pip install --upgrade ufbt
-```
-
-#### Update Firmware
-
-+ Download Update
-
-```shell
-ufbt update --channel=release
-```
-
-#### Build App FLash it
-
-+ Upload to Flipper
-
-```shell
-ufbt flash_usb
-```
-
-+ VSCode setup and build
-
-```shell
-ufbt faps vscode_dist
-```
-
-#### Build FAP
-
-Navigiere in das Rootverzeichnis der App und führe dort nach installation von ufbt folgenden Befehl aus:
-
-```shell
-ufbt
-```
-
-Die `.fap`-Datei liegt dann im `./dist`-Ordner
-
-#### Auto Launch
-
-```shell
-ufbt launch
-```
 
 ## Debug
 
@@ -126,24 +162,7 @@ on [Tindie](https://www.tindie.com/products/cuttrace/flipper-zero-jlink-adapter/
 
 <img src="docs/flipper_jlink_adapter.jpg" alt="FlipperJLINKAdapter" height="850px"/>
 
-## Docs and credits
-
-### SDQ
-
-Here some specs about the protocol used:
-
-+ Name: SDQ (IDBUS) developed by Texas Instruments
-+ Source: [Reversed Protocol](https://nyansatan.github.io/lightning/)
-
-Credits for SDQ reverse engineering to [@nyansatan](https://github.com/nyansatan)
-
-### Tamarin Cable Implementation
-
-+ [Tamarin Firmware](https://github.com/stacksmashing/tamarin-firmware)
-
-Credits to [@stacksmashing](https://github.com/stacksmashing) for an example pi pico implementation and his defcon talk
-on this subject. (
-watch [here](https://www.youtube.com/watch?v=8p3Oi4DL0eI&list=PL0P69gP-VL8eSCSNY-gQefgY1DXBSlNJC&index=6&t=616s))
+## Docs
 
 ### UFBT
 

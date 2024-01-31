@@ -242,7 +242,7 @@ bool sdq_device_send(SDQDevice* bus, const uint8_t data[], size_t data_size) {
         sdq_device_send_byte(bus, data[i]);
     }
     // Calculate and send CRC8
-    uint8_t crc = crc_data(data, data_size); // Fix: use crc_data instead of crc8_calculate
+    uint8_t crc = crc_data(data, data_size);
     sdq_device_send_byte(bus, crc);
 
     // Send Break
