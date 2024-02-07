@@ -4,6 +4,10 @@ Implementation to use a Flipper-Zero as SWD/DCSD-Cable for iPhones just like kno
 
 > ![](docs/YuriCableLogo.svg)
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=arag0re/fz-yuricable-pro-max&type=Timeline)](https://star-history.com/#arag0re/fz-yuricable-pro-max&Timeline)
+
 ## Tested iPhones:
 
 | iPhone      | DCSD | Reset | DFU | JTAG |
