@@ -24,15 +24,11 @@ jobs:
         python -m pip install --upgrade ufbt
     
 
-    - name: Run ufbt vscode_dist
+    - name: Run ufbt vscode_dist and build
       run: |
         # Assuming ufbt is available and configured
         ufbt vscode_dist
-      # If ufbt requires specific environment variables or setup, add them here
-
-    - name: Build Flipper Application Package (.fap)
-      uses: flipperdevices/flipperzero-ufbt-action@v0.1.3
-      # Add any required inputs for flipperzero-ufbt-action here
+        ufbt
 
     - name: Create Tag and Release
       id: create_release
