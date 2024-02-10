@@ -1,38 +1,54 @@
-name: "FAP: Build and lint"
-on: [push, pull_request]
+name: Build and Release FAP
+
+on:
+  push:
+    branches:
+      - main # Adjust this to your preference, e.g., releases/*
+
 jobs:
-  fix-and-build:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # Ensure tags are fetched
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x' # Set up the python version
 
-      - name: Install ufbt
-        run: |
-          python -m pip install --upgrade pip
-          pip install ufbt==latest # Specify the version you need
+    - name: Setup ufbt Environment
+      run: |
+        # Add commands to setup environment for ufbt if needed
+        # For example, install dependencies or configure the system
+        echo "Setup environment for ufbt"
 
-      - name: Run ufbt vscode_dist
-        run: ufbt vscode_dist
-        # Add any additional arguments here if necessary
+    - name: Run ufbt vscode_dist
+      run: |
+        # Assuming ufbt is available and configured
+        ufbt vscode_dist
+      # If ufbt requires specific environment variables or setup, add them here
 
-      # Example for building with ufbt, adjust according to your needs
-      - name: Build with ufbt
-        uses: flipperdevices/flipperzero-ufbt-action@v0.1
-        id: build-app
-        with:
-          task: build
-          sdk-channel: dev # Or any other SDK source you're using
-          # Add other inputs as per your requirement
+    - name: Build Flipper Application Package (.fap)
+      uses: flipperdevices/flipperzero-ufbt-action@v0.1.3
+      # Add any required inputs for flipperzero-ufbt-action here
 
-      - name: Upload app artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ github.event.repository.name }}-${{ steps.build-app.outputs.suffix }}
-          path: ${{ steps.build-app.outputs.fap-artifacts }}
+    - name: Create Tag and Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, no need to create your own
+      with:
+        tag_name: ${{ github.ref }}-fap # or any other tag format you prefer
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+
+    - name: Upload app artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ github.event.repository.name }}-${{ steps.build-app.outputs.suffix }}
+        path: ${{ steps.build-app.outputs.fap-artifacts }}
 
