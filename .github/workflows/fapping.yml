@@ -22,12 +22,13 @@ jobs:
     - name: Setup ufbt Environment
       run: |
         # Add commands to setup environment for ufbt if needed
-        echo "Setup environment for ufbt"
+        python -m pip install --upgrade ufbt
 
     - name: Run ufbt vscode_dist
       run: |
         # Assuming ufbt is available and configured
         ufbt vscode_dist
+        ufbt
       # If ufbt requires specific environment variables or setup, add them here
 
     - name: Build Flipper Application Package (.fap)
