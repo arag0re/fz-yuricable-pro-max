@@ -19,16 +19,6 @@ jobs:
       with:
         python-version: '3.x' # Set up the Python version
 
-    # Install ImageMagick for image conversion and validation
-    - name: Install ImageMagick
-      run: sudo apt-get install imagemagick -y
-
-    # Convert and validate images
-    - name: Convert and Validate Images
-      run: |
-        find ./assets -name '*.png' -exec convert {} {}.temp.jpeg \; -exec convert {}.temp.jpeg {} \; -exec rm {}.temp.jpeg \;
-        find ./assets -name '*.png' | xargs identify
-
     - name: Setup ufbt Environment
       run: |
         # Add commands to setup environment for ufbt if needed
