@@ -12,17 +12,13 @@ jobs:
     steps:
     - name: Install git-lfs
       run: |
-        sudo apt install git-lfs
+        sudo apt install git-lfs build-essential
         git lfs install
         
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0 # Ensure tags are fetched
         lfs: true # Make sure to add this line to ensure LFS files are correctly pulled
-
-    - name: ls
-      run: |
-        ls
         
     - name: Setup Python
       uses: actions/setup-python@v4
