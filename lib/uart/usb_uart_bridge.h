@@ -9,6 +9,7 @@
 #include <cli/cli.h>
 #include <toolbox/api_lock.h>
 #include <furi_hal.h>
+#include <furi_hal_uart.h>
 #include <furi_hal_usb_cdc.h>
 #include "yuricable_pro_max_asciiart.h"
 
@@ -43,7 +44,10 @@ void usb_uart_disable(UsbUartBridge* usb_uart);
 
 void usb_uart_set_config(UsbUartBridge* usb_uart, UsbUartConfig* cfg);
 
-void usb_uart_set_command_callback(UsbUartBridge* usb_uart, UsbUartBridgeCommand callback, void* context);
+void usb_uart_set_command_callback(
+    UsbUartBridge* usb_uart,
+    UsbUartBridgeCommand callback,
+    void* context);
 
 void usb_uart_get_config(UsbUartBridge* usb_uart, UsbUartConfig* cfg);
 
