@@ -19,20 +19,14 @@ jobs:
       with:
         python-version: '3.x' # Set up the Python version
 
-    - name: Setup ufbt Environment
+    - name: Install git-lfs
       run: |
-        # Add commands to setup environment for ufbt if needed
-        python -m pip install --upgrade ufbt
-
-    - name: Run ufbt vscode_dist
-      run: |
-        # Assuming ufbt is available and configured
-        ufbt vscode_dist
-        ufbt
-      # If ufbt requires specific environment variables or setup, add them here
-
+        apt-get install git-lfs
+        git lfs install
+        
     - name: Build Flipper Application Package (.fap)
       uses: flipperdevices/flipperzero-ufbt-action@v0.1.3
+      
     - name: Create Tag and Release
       id: create_release
       uses: actions/create-release@v1
