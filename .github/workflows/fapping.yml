@@ -9,12 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    steps:
-    - name: Install git-lfs
-      run: |
-        sudo apt install git-lfs build-essential
-        git lfs install
-        
+    steps:        
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0 # Ensure tags are fetched
