@@ -10,6 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Install git-lfs
+      run: |
+        sudo apt install git-lfs
+        git lfs install
+        
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0 # Ensure tags are fetched
@@ -19,11 +24,6 @@ jobs:
       with:
         python-version: '3.x' # Set up the Python version
 
-    - name: Install git-lfs
-      run: |
-        sudo apt install git-lfs
-        git lfs install
-        
     - name: Build Flipper Application Package (.fap)
       uses: flipperdevices/flipperzero-ufbt-action@v0.1.3
       
