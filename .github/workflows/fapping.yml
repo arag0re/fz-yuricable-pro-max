@@ -20,10 +20,14 @@ jobs:
         fetch-depth: 0 # Ensure tags are fetched
         lfs: true # Make sure to add this line to ensure LFS files are correctly pulled
 
+    - name: ls
+      run: |
+        ls
+        
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.x' # Set up the Python version
+        python-version: '3.11' # Set up the Python version
 
     - name: Build Flipper Application Package (.fap)
       uses: flipperdevices/flipperzero-ufbt-action@v0.1.3
