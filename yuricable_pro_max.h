@@ -2,6 +2,7 @@
 
 #include <gui/gui.h>
 #include "lib/sdq/sdq_device.c"
+#include "lib/uart/usb_uart_bridge.h"
 
 typedef enum { EventTypeKey } EventType;
 
