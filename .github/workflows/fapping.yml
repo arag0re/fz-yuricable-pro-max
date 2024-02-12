@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:        
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
-        fetch-depth: 0 # Ensure tags are fetched
-        lfs: true # Make sure to add this line to ensure LFS files are correctly pulled
+        fetch-depth: 0
+        lfs: true 
         
     - name: Setup Python
       uses: actions/setup-python@v4
@@ -21,10 +21,12 @@ jobs:
         python-version: '3.11' # Set up the Python version
 
     - name: Build Flipper Application Package (.fap)
+      with: 
+        sdk-branch: 0.97.1
       uses: flipperdevices/flipperzero-ufbt-action@v0.1.3
       
     - name: Create Tag and Release
-      id: create_release
+      id: create_release        
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, no need to create your own
