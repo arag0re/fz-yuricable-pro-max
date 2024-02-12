@@ -2,10 +2,8 @@ name: Build and Release FAP
 
 on:
   push:
-    branches:
-      - main # Adjust this to your preference, e.g., releases/*
     tags:
-      - "v*.*.*" # This will trigger the workflow for tag pushes that match this pattern
+      - 'v*.*.*'
 
 jobs:
   build:
