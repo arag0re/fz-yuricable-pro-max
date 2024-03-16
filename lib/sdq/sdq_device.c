@@ -76,6 +76,7 @@ static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
     uint8_t command[4] = {0};
     if(sdq_device_receive(bus, command, sizeof(command))) {
         if(sdq_device_wait_while_gpio_is(bus, bus->timings.BREAK_meaningful_max, false)) {
+            furi_hal_gpio_init(bus->gpio_pin, GpioModeOutputOpenDrain, GpioPullNo, GpioSpeedLow);
             switch(command[0]) {
             case TRISTAR_POLL:
                 switch(bus->runCommand) {
@@ -154,17 +155,17 @@ static inline bool sdq_device_bus_start(SDQDevice* bus) {
 static void sdq_device_exti_callback(void* context) {
     SDQDevice* bus = context;
     FURI_CRITICAL_ENTER();
-    furi_hal_gpio_init(bus->gpio_pin, GpioModeOutputOpenDrain, GpioPullNo, GpioSpeedLow);
-    if(sdq_device_wait_while_gpio_is(bus, bus->timings.BREAK_meaningful_max - 8, false)) {
-        if(sdq_device_wait_while_gpio_is(bus, bus->timings.BREAK_recovery + 1, true)) {
+    if(sdq_device_wait_while_gpio_is(bus, bus->timings.BREAK_meaningful_min, false)) {
+        if(sdq_device_wait_while_gpio_is(bus, bus->timings.BREAK_recovery, true)) {
             sdq_device_bus_start(bus);
         }
     }
-    furi_hal_gpio_init(bus->gpio_pin, GpioModeInterruptFall, GpioPullUp, GpioSpeedLow);
+    furi_hal_gpio_init(bus->gpio_pin, GpioModeInterruptFall, GpioPullUp, GpioSpeedVeryHigh);
     FURI_CRITICAL_EXIT();
 }
 
 void sdq_device_start(SDQDevice* bus) {
+    furi_hal_gpio_remove_int_callback(bus->gpio_pin);
     furi_hal_gpio_add_int_callback(bus->gpio_pin, sdq_device_exti_callback, bus);
     furi_hal_gpio_write(bus->gpio_pin, true);
     furi_hal_gpio_init(bus->gpio_pin, GpioModeInterruptFall, GpioPullUp, GpioSpeedVeryHigh);
