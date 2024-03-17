@@ -1,5 +1,5 @@
-[![Build and Release FAP](https://github.com/arag0re/fz-yuricable-pro-max/actions/workflows/fapping.yml/badge.svg?branch=main)](https://github.com/arag0re/fz-yuricable-pro-max/actions/workflows/fapping.yml)
-[![GitHub Release](https://img.shields.io/github/release/arag0re/fz-yuricable-pro-max.svg?style=flat)]()  
+[![Build and Release FAP](https://img.shields.io/github/actions/workflow/status/arag0re/fz-yuricable-pro-max/.github%2Fworkflows%2Ffapping.yml)]()
+[![GitHub Release](https://img.shields.io/github/v/release/arag0re/fz-yuricable-pro-max)]()
 [![Github All Releases](https://img.shields.io/github/downloads/arag0re/fz-yuricable-pro-max/total.svg?style=flat)]()  
 
 # YuriCable Pro Max
