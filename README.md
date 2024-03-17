@@ -1,6 +1,6 @@
 [![Build and Release FAP](https://img.shields.io/github/actions/workflow/status/arag0re/fz-yuricable-pro-max/.github%2Fworkflows%2Ffapping.yml)]()
 [![GitHub Release](https://img.shields.io/github/v/release/arag0re/fz-yuricable-pro-max)]()
-[![Github All Releases](https://img.shields.io/github/downloads/arag0re/fz-yuricable-pro-max/total.svg?style=flat)]()  
+[![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
 
 # YuriCable Pro Max
 
