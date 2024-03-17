@@ -136,18 +136,14 @@ static void usb_uart_vcp_deinit(UsbUartBridge* usb_uart, uint8_t vcp_ch) {
 
 static void usb_uart_serial_init(UsbUartBridge* usb_uart, uint8_t uart_ch) {
     furi_assert(!usb_uart->serial_handle);
-
     usb_uart->serial_handle = furi_hal_serial_control_acquire(uart_ch);
     furi_assert(usb_uart->serial_handle);
-
     furi_hal_serial_init(usb_uart->serial_handle, 115200);
-    furi_hal_serial_dma_rx_start(
-        usb_uart->serial_handle, usb_uart_on_irq_rx_dma_cb, usb_uart, false);
+    furi_hal_serial_dma_rx_start( usb_uart->serial_handle, usb_uart_on_irq_rx_dma_cb, usb_uart, false);
 }
 
 static void usb_uart_serial_deinit(UsbUartBridge* usb_uart) {
     furi_assert(usb_uart->serial_handle);
-
     furi_hal_serial_deinit(usb_uart->serial_handle);
     furi_hal_serial_control_release(usb_uart->serial_handle);
     usb_uart->serial_handle = NULL;
@@ -229,8 +225,7 @@ static int32_t usb_uart_worker(void* context) {
             if(len > 0) {
                 if(furi_semaphore_acquire(usb_uart->tx_sem, 100) == FuriStatusOk) {
                     usb_uart->st.rx_cnt += len;
-                    furi_check(
-                        furi_mutex_acquire(usb_uart->usb_mutex, FuriWaitForever) == FuriStatusOk);
+                    furi_check(furi_mutex_acquire(usb_uart->usb_mutex, FuriWaitForever) == FuriStatusOk);
                     furi_hal_cdc_send(usb_uart->cfg.vcp_ch, usb_uart->rx_buf, len);
                     save_log_and_write((char*)usb_uart->rx_buf, len);
                     furi_check(furi_mutex_release(usb_uart->usb_mutex) == FuriStatusOk);
