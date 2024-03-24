@@ -7,9 +7,9 @@ App(
     stack_size=2 * 1024,
     fap_category="Gpio",
     fap_version="0.3",
-    fap_icon="lightning_10x.png",
+    fap_icon="assets/lightning_10x.png",
     fap_description="SWD/DCSD-Cable App implemented for the Flipper Zero",
     fap_author="arag0re.eth && PooruTorie",
-    fap_weburl="https://github.com/arag0re/fz-iphone-dcsd",
+    fap_weburl="https://github.com/arag0re/fz-yuricable-pro-max",
     fap_icon_assets="assets",
 )

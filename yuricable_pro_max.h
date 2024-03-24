@@ -1,12 +1,10 @@
 #pragma once
-
 #include <furi.h>
 #include <gui/gui.h>
 #include <gui/view_dispatcher.h>
 #include <gui/scene_manager.h>
 #include <gui/modules/widget.h>
 #include <gui/modules/submenu.h>
-#include <gui/modules/text_input.h>
 #include <furi_hal_light.h>
 #include "lib/sdq/sdq_device.c"
 
@@ -33,14 +31,32 @@ typedef enum {
     YuriCableProMaxMainMenuSceneCharging,
 } YuriCableProMaxMainMenuSceneIndex;
 
+typedef enum {
+    YuriCableProMaxMainMenuTitle,
+    YuriCableProMaxDCSDSubmenuTitle,
+    YuriCableProMaxResetSubmenuTitle,
+    YuriCableProMaxDFUSubmenuTitle,
+    YuriCableProMaxChargingSubmenuTitle,
+    YuriCableProMaxSubmenuTitlesCount
+} YuriCableProMaxSubmenuTitles;
+
+const char* YuriCableProMaxSubmenuTitlesStrings[] = {
+    "YuriCable Pro Max",
+    "DCSD - Bootlog",
+    "Force Reset",
+    "Force DFU",
+    "5V Charging",
+};
 typedef struct {
     SDQDevice* sdq;
     IconAnimation* listeningAnimation;
+    YuriCableProMaxSubmenuTitles selectedSubmenu;
     bool ledMainMenu;
-    bool ledOff;
+    bool ledSequenceCommandExecutedPlayed;
 } YuriCableData;
 
 typedef struct App {
+    Gui* gui;
     SceneManager* scene_manager;
     ViewDispatcher* view_dispatcher;
     Submenu* submenu;
@@ -59,7 +75,7 @@ typedef enum {
 } YuriCableProMaxMainMenuSceneEvent;
 
 typedef struct {
-    EventType type; 
+    EventType type;
     InputEvent input;
 } Event;
 

@@ -73,6 +73,7 @@ typedef enum {
     SDQDeviceErrorInvalidCommand,
     SDQDeviceErrorBitReadTiming,
     SDQDeviceErrorTimeout,
+    SDQDeviceErrorInvalidCRC,
 } SDQDeviceError;
 
 typedef struct SDQDevice SDQDevice;
