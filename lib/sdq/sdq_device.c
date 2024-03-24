@@ -92,12 +92,14 @@ static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
                 case SDQDeviceCommand_SN:
                     if(sdq_device_send(bus, responses.SN, sizeof(responses.SN))) {
                         bus->commandExecuted = true;
+                        sdq_device_stop(bus);
                     }
                     break;
                 case SDQDeviceCommand_RESET:
                     if(sdq_device_send(
                            bus, responses.RESET_DEVICE, sizeof(responses.RESET_DEVICE))) {
                         bus->commandExecuted = true;
+                        sdq_device_stop(bus);
                     }
                     break;
                 case SDQDeviceCommand_DFU:
@@ -105,6 +107,7 @@ static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
                         if(sdq_device_send(bus, responses.DFU, sizeof(responses.DFU))) {
                             bus->resetInProgress = false;
                             bus->commandExecuted = true;
+                            sdq_device_stop(bus);    
                         }
                     } else {
                         if(sdq_device_send(
@@ -118,6 +121,7 @@ static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
                         if(sdq_device_send(bus, responses.USB_UART, sizeof(responses.USB_UART))) {
                             bus->resetInProgress = false;
                             bus->commandExecuted = true;
+                            sdq_device_stop(bus);
                         }
                     } else {
                         if(sdq_device_send(
@@ -131,7 +135,7 @@ static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
                            bus,
                            responses.USB_A_CHARGING_CABLE,
                            sizeof(responses.USB_A_CHARGING_CABLE))) {
-                        bus->commandExecuted = true;
+                        
                     }
                     break;
                 case SDQDeviceCommand_JTAG:
@@ -141,6 +145,7 @@ static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
                         usb_uart_send_data(
                             bus->uart_bridge, RECOVERY_PLIST, sizeof(RECOVERY_PLIST));
                         bus->commandExecuted = true;
+                        sdq_device_stop(bus);
                     }
                     break;
                 default:
@@ -154,7 +159,10 @@ static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
                 break;
             case TRISTAR_POWER:
                 //sdq_delay_us(10);
-                sdq_device_send(bus, responses.POWER_ANSWER, sizeof(responses.POWER_ANSWER));
+                if(sdq_device_send(bus, responses.POWER_ANSWER, sizeof(responses.POWER_ANSWER))){
+                    bus->commandExecuted = true;
+                    sdq_device_stop(bus);
+                }
                 break;
             case TRISTAR_SERVICEMODE_ANSWER:
                 sdq_device_send(bus, responses.KEYSET, sizeof(responses.KEYSET));

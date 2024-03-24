@@ -1,6 +1,5 @@
 #include <yuricable_pro_max.h>
 #include <yuricable_pro_max_icons.h>
-#include <furi_hal_light.h>
 
 #define TAG "YURICABLE_PRO_MAX"
 #define SDQ_PIN gpio_ext_pa7 // GPIO 2
@@ -52,33 +51,36 @@ FuriString* yuricable_command_callback(char* command, void* ctx) {
     return furi_string_alloc_printf("%s is no valid command", command);
 }
 
-//typedef enum {
-//    LedEvtStop = (1 << 0),
-//    LedEvtStart = (1 << 1),
-//    // Add more event flags as needed
-//} LedEvtFlags;
-
-//// Implement the LED sequence worker thread function
-//static int32_t led_sequence_worker(void* ctx) {
-//    YuriCableContext* yuricable_context = (YuriCableContext*)ctx;
-//    while(1) {
-//        uint32_t events = furi_thread_flags_get();
-//
-//        // Check if the stop event is received
-//        if(events & WorkerEvtStop) {
-//            // If the stop event is received, exit the loop
-//            break;
-//        }
-//
-//        if(yuricable_context->data->sdq->listening) {
-//            furi_hal_light_sequence("rgb B.b.B");
-//        } else {
-//            furi_hal_light_set(LightBlue, 0);
-//        }
-//    }
-//
-//    return 0;
-//}
+// Implement the LED sequence worker thread function
+static int32_t led_sequence_worker(void* ctx) {
+    App* app = (App*)ctx;
+    while(1) {
+        uint32_t events = furi_thread_flags_get();
+        if(events & WorkerEvtStop) {
+            break;
+        }
+        if(app->data->sdq->listening) {
+            furi_hal_light_sequence("rgb B.b.B");
+        } else if(app->data->sdq->commandExecuted) {
+            furi_hal_light_set(LightRed, 0);
+            furi_hal_light_set(LightGreen, 255);
+            furi_hal_light_set(LightBlue, 0);
+        } else if(app->data->ledMainMenu) {
+            furi_hal_light_set(LightRed, 0);
+            furi_hal_light_set(LightGreen, 0);
+            furi_hal_light_set(LightBlue, 255);
+        } else if(app->data->sdq->error) {
+            furi_hal_light_set(LightRed, 255);
+            furi_hal_light_set(LightGreen, 0);
+            furi_hal_light_set(LightBlue, 0);
+        } else if(app->data->ledOff) {
+            furi_hal_light_set(LightRed, 0);
+            furi_hal_light_set(LightBlue, 0);
+            furi_hal_light_set(LightGreen, 0);
+        }
+    }
+    return 0;
+}
 
 void yuricable_pro_max_menu_callback(void* context, uint32_t index) {
     App* app = context;
@@ -172,8 +174,10 @@ void yuricable_pro_max_toggle_sdq_button_callback(
     YuriCableData* data = (YuriCableData*)context;
     if(data->sdq->listening) {
         sdq_device_stop(data->sdq);
+        furi_hal_power_disable_otg();
     } else {
         sdq_device_start(data->sdq);
+        furi_hal_power_enable_otg();
     }
 }
 
@@ -181,15 +185,9 @@ void yuricable_pro_max_dcsd_scene_on_enter(void* context) {
     App* app = context;
     widget_reset(app->widget);
     widget_add_string_element(app->widget, 25, 15, AlignLeft, AlignCenter, FontPrimary, "DCSD");
-    widget_add_string_element(
-        app->widget, 30, 35, AlignLeft, AlignCenter, FontBigNumbers, "0 4 2");
     app->data->sdq->runCommand = SDQDeviceCommand_DCSD;
-    widget_add_button_element(
-        app->widget,
-        GuiButtonTypeCenter,
-        "Start",
-        yuricable_pro_max_toggle_sdq_button_callback,
-        app->data);
+    app->data->ledMainMenu = false;
+    sdq_device_start(app->data->sdq);
     view_dispatcher_switch_to_view(app->view_dispatcher, YuriCableProMaxWidgetView);
 }
 
@@ -198,15 +196,9 @@ void yuricable_pro_max_reset_scene_on_enter(void* context) {
     widget_reset(app->widget);
     widget_add_string_element(
         app->widget, 25, 15, AlignLeft, AlignCenter, FontPrimary, "Force Reset");
-    widget_add_string_element(
-        app->widget, 30, 35, AlignLeft, AlignCenter, FontBigNumbers, "0 4 2");
     app->data->sdq->runCommand = SDQDeviceCommand_RESET;
-    widget_add_button_element(
-        app->widget,
-        GuiButtonTypeCenter,
-        "Start",
-        yuricable_pro_max_toggle_sdq_button_callback,
-        app->data);
+    app->data->ledMainMenu = false;
+    sdq_device_start(app->data->sdq);
     view_dispatcher_switch_to_view(app->view_dispatcher, YuriCableProMaxWidgetView);
 }
 
@@ -215,15 +207,9 @@ void yuricable_pro_max_dfu_scene_on_enter(void* context) {
     widget_reset(app->widget);
     widget_add_string_element(
         app->widget, 25, 15, AlignLeft, AlignCenter, FontPrimary, "Force DFU Mode");
-    widget_add_string_element(
-        app->widget, 30, 35, AlignLeft, AlignCenter, FontBigNumbers, "0 4 2");
+    app->data->ledMainMenu = false;
     app->data->sdq->runCommand = SDQDeviceCommand_DFU;
-    widget_add_button_element(
-        app->widget,
-        GuiButtonTypeCenter,
-        "Start",
-        yuricable_pro_max_toggle_sdq_button_callback,
-        app->data);
+    sdq_device_start(app->data->sdq);
     view_dispatcher_switch_to_view(app->view_dispatcher, YuriCableProMaxWidgetView);
 }
 
@@ -232,55 +218,25 @@ void yuricable_pro_max_charging_scene_on_enter(void* context) {
     widget_reset(app->widget);
     widget_add_string_element(
         app->widget, 25, 15, AlignLeft, AlignCenter, FontPrimary, "5V Charging");
-    widget_add_string_element(
-        app->widget, 30, 35, AlignLeft, AlignCenter, FontBigNumbers, "0 4 2");
+    app->data->ledMainMenu = false;
     app->data->sdq->runCommand = SDQDeviceCommand_CHARGING;
-    widget_add_button_element(
-        app->widget,
-        GuiButtonTypeCenter,
-        "Start",
-        yuricable_pro_max_toggle_sdq_button_callback,
-        app->data);
+    sdq_device_start(app->data->sdq);
     view_dispatcher_switch_to_view(app->view_dispatcher, YuriCableProMaxWidgetView);
 }
 
-bool yuricable_pro_max_dcsd_scene_on_event(void* context, SceneManagerEvent event) {
+bool yuricable_pro_max_sdq_scene_on_event(void* context, SceneManagerEvent event) {
     UNUSED(context);
     UNUSED(event);
     return false; // event not handled.
 }
 
-bool yuricable_pro_max_reset_scene_on_event(void* context, SceneManagerEvent event) {
-    UNUSED(context);
-    UNUSED(event);
-    return false; // event not handled.
-}
-
-bool yuricable_pro_max_dfu_scene_on_event(void* context, SceneManagerEvent event) {
-    UNUSED(context);
-    UNUSED(event);
-    return false; // event not handled.
-}
-
-bool yuricable_pro_max_charging_scene_on_event(void* context, SceneManagerEvent event) {
-    UNUSED(context);
-    UNUSED(event);
-    return false; // event not handled.
-}
-
-void yuricable_pro_max_dcsd_scene_on_exit(void* context) {
-    UNUSED(context);
-}
-
-void yuricable_pro_max_reset_scene_on_exit(void* context) {
-    UNUSED(context);
-}
-
-void yuricable_pro_max_dfu_scene_on_exit(void* context) {
-    UNUSED(context);
-}
-
-void yuricable_pro_max_charging_scene_on_exit(void* context) {
+void yuricable_pro_max_sdq_scene_on_exit(void* context) {
+    App* app = context;
+    if(app->data->sdq->listening) {
+        sdq_device_stop(app->data->sdq);
+    }
+    app->data->sdq->commandExecuted = false;
+    app->data->ledMainMenu = true;
     UNUSED(context);
 }
 
@@ -298,17 +254,17 @@ void (*const yuricable_pro_max_scene_on_enter_handlers[])(void*) = {
 
 bool (*const yuricable_pro_max_scene_on_event_handlers[])(void*, SceneManagerEvent) = {
     yuricable_pro_max_main_menu_scene_on_event,
-    yuricable_pro_max_dcsd_scene_on_event,
-    yuricable_pro_max_reset_scene_on_event,
-    yuricable_pro_max_dfu_scene_on_event,
-    yuricable_pro_max_charging_scene_on_event};
+    yuricable_pro_max_sdq_scene_on_event,
+    yuricable_pro_max_sdq_scene_on_event,
+    yuricable_pro_max_sdq_scene_on_event,
+    yuricable_pro_max_sdq_scene_on_event};
 
 void (*const yuricable_pro_max_scene_on_exit_handlers[])(void*) = {
     yuricable_pro_max_main_menu_scene_on_exit,
-    yuricable_pro_max_dcsd_scene_on_exit,
-    yuricable_pro_max_reset_scene_on_exit,
-    yuricable_pro_max_dfu_scene_on_exit,
-    yuricable_pro_max_charging_scene_on_exit};
+    yuricable_pro_max_sdq_scene_on_exit,
+    yuricable_pro_max_sdq_scene_on_exit,
+    yuricable_pro_max_sdq_scene_on_exit,
+    yuricable_pro_max_sdq_scene_on_exit};
 
 static const SceneManagerHandlers yuricable_pro_max_scene_manager_handlers = {
     .on_enter_handlers = yuricable_pro_max_scene_on_enter_handlers,
@@ -331,10 +287,14 @@ bool yuricable_pro_max_back_event_callback(void* context) {
 
 App* app_alloc() {
     App* app = malloc(sizeof(App));
+    // Initialize LED Sequence
+    app->led_thread = furi_thread_alloc_ex("LedSequenceWorker", 1024, led_sequence_worker, app);
     // Initialize YuriCableContext
     app->mutex = furi_mutex_alloc(FuriMutexTypeNormal);
     app->data = malloc(sizeof(YuriCableData));
     app->data->listeningAnimation = icon_animation_alloc(&A_Round_loader_8x8);
+    app->data->ledMainMenu = true;
+    app->data->ledOff = false;
     app->queue = furi_message_queue_alloc(8, sizeof(Event));
     // Initialize USB UART bridge
     UsbUartConfig bridgeConfig = {
@@ -342,8 +302,11 @@ App* app_alloc() {
     UsbUartBridge* uartBridge = usb_uart_enable(&bridgeConfig);
     usb_uart_set_command_callback(uartBridge, yuricable_command_callback, app);
 
+    // Initialize SDQ
     app->data->sdq = sdq_device_alloc(&SDQ_PIN, uartBridge);
     app->data->sdq->runCommand = SDQDeviceCommand_DCSD;
+
+    //Initialize SceneManager
     app->scene_manager = scene_manager_alloc(&yuricable_pro_max_scene_manager_handlers, app);
     app->view_dispatcher = view_dispatcher_alloc();
     view_dispatcher_enable_queue(app->view_dispatcher);
@@ -360,17 +323,13 @@ App* app_alloc() {
         app->view_dispatcher, YuriCableProMaxWidgetView, widget_get_view(app->widget));
 
     return app;
-
-    //LedSeq Thread init
-    //FuriThread* led_thread =
-    //    furi_thread_alloc_ex("LedSequenceWorker", 1024, led_sequence_worker, yuricable_context);
-    //furi_thread_start(led_thread);
-    //furi_thread_mark_as_service(led_thread);
-    //FuriThreadId led_thread_id = furi_thread_get_id(led_thread);
 }
 
 void app_free(App* app) {
     furi_assert(app);
+    app->data->ledOff = true;
+    furi_thread_join(app->led_thread);
+    furi_thread_free(app->led_thread);
     view_dispatcher_remove_view(app->view_dispatcher, YuriCableProMaxSubmenuView);
     view_dispatcher_remove_view(app->view_dispatcher, YuriCableProMaxWidgetView);
     scene_manager_free(app->scene_manager);
@@ -382,6 +341,7 @@ void app_free(App* app) {
     free(app->data);
     furi_mutex_free(app->mutex);
     furi_message_queue_free(app->queue);
+    furi_record_close(RECORD_GUI);
     free(app);
 }
 
@@ -389,53 +349,11 @@ int32_t yuricable_pro_max_app(void* p) {
     UNUSED(p);
     FURI_LOG_I(TAG, "Starting YuriCable Pro Max");
     App* app = app_alloc();
-
+    furi_thread_start(app->led_thread);
     Gui* gui = furi_record_open(RECORD_GUI);
     view_dispatcher_attach_to_gui(app->view_dispatcher, gui, ViewDispatcherTypeFullscreen);
     scene_manager_next_scene(app->scene_manager, YuriCableProMaxMainMenuScene);
     view_dispatcher_run(app->view_dispatcher);
-
-    //Event event;
-    //bool processing = true;
-    //do {
-    //    if(furi_message_queue_get(app->queue, &event, 300) == FuriStatusOk) {
-    //        FURI_LOG_T(TAG, "Got event type: %d", event.type);
-    //        switch(event.type) {
-    //        case EventTypeKey:
-    //            // Short press of back button exits the program.
-    //            if(event.input.type == InputTypeShort && event.input.key == InputKeyBack) {
-    //                FURI_LOG_I(TAG, "Short-Back pressed. Exiting program.");
-    //                processing = false;
-    //            } else if(event.input.type == InputTypeShort && event.input.key == InputKeyOk) {
-    //                FURI_LOG_I(TAG, "Pressed Enter Key");
-    //                if(!app->data->sdq->listening) {
-    //                    sdq_device_start(app->data->sdq);
-    //                    icon_animation_start(app->data->listeningAnimation);
-    //                    //led_sequence_start(led_thread_id);
-    //                    furi_hal_power_enable_otg();
-    //                } else {
-    //                    sdq_device_stop(app->data->sdq);
-    //                    icon_animation_stop(app->data->listeningAnimation);
-    //                    //led_sequence_stop(led_thread_id);
-    //                    furi_hal_power_disable_otg();
-    //                }
-    //            } else if(event.input.type == InputTypeShort && event.input.key == InputKeyUp) {
-    //                if(app->data->sdq->runCommand > 1) {
-    //                    app->data->sdq->runCommand--;
-    //                    app->data->sdq->commandExecuted = false;
-    //                }
-    //            } else if(event.input.type == InputTypeShort && event.input.key == InputKeyDown) {
-    //                if(app->data->sdq->runCommand < 4) {
-    //                    app->data->sdq->runCommand++;
-    //                    app->data->sdq->commandExecuted = false;
-    //                }
-    //            }
-    //            break;
-    //        }
-    //    }
-    //
-    //    //view_port_update(app->view_port);
-    //} while(processing);
 
     app_free(app);
     return 0;

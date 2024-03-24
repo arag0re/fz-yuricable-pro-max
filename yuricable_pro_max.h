@@ -7,6 +7,7 @@
 #include <gui/modules/widget.h>
 #include <gui/modules/submenu.h>
 #include <gui/modules/text_input.h>
+#include <furi_hal_light.h>
 #include "lib/sdq/sdq_device.c"
 
 typedef enum { EventTypeKey } EventType;
@@ -35,7 +36,8 @@ typedef enum {
 typedef struct {
     SDQDevice* sdq;
     IconAnimation* listeningAnimation;
-    // You can add additional state here.
+    bool ledMainMenu;
+    bool ledOff;
 } YuriCableData;
 
 typedef struct App {
@@ -46,6 +48,7 @@ typedef struct App {
     FuriMessageQueue* queue;
     FuriMutex* mutex;
     YuriCableData* data;
+    FuriThread* led_thread;
 } App;
 
 typedef enum {
@@ -56,7 +59,11 @@ typedef enum {
 } YuriCableProMaxMainMenuSceneEvent;
 
 typedef struct {
-    EventType type; // The reason for this event.
-    InputEvent input; // This data is specific to keypress data.
-    // You can add additional data that is helpful for your events.
+    EventType type; 
+    InputEvent input;
 } Event;
+
+typedef enum {
+    LedEvtStop = (1 << 0),
+    LedEvtStart = (1 << 1),
+} LedEvtFlags;
