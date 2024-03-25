@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="com.jetbrains.cidr.lang.workspace.compiler.custom.CustomCompilerService">
+    <option name="definitionsFile" value="$USER_HOME$/.ufbt/build/yuricable_pro_max" />
+  </component>
+</project>

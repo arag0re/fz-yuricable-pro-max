@@ -6,10 +6,10 @@
 #define TAG "YuriStorage"
 #define STORAGE_FILE_BUF_LEN 5
 #define END_MARKER "======== End of iBoot serial output. ========"
-#define MAX_BUFFER_SIZE 106000
+#define MAX_BUFFER_SIZE 112000
 
-static char aggregate_buffer[MAX_BUFFER_SIZE];
-static size_t aggregate_buffer_len = 0;
+char aggregate_buffer[MAX_BUFFER_SIZE];
+size_t aggregate_buffer_len = 0;
 
 static bool storage_printf(File* file, const char* format, ...) {
     va_list args;
@@ -47,18 +47,10 @@ void save_log_and_write(char* str, size_t len) {
         DateTime currentDate;
         furi_hal_rtc_get_datetime(&currentDate);
         char dateTimeStr[64];
-        snprintf(
-            dateTimeStr,
-            sizeof(dateTimeStr),
-            "iBoot_log_%04u%02u%02u%02u%02u.txt",
-            currentDate.year,
-            currentDate.month,
-            currentDate.day,
-            currentDate.hour,
-            currentDate.minute);
+        snprintf(dateTimeStr, sizeof(dateTimeStr), "iBoot_log_%04u%02u%02u%02u%02u.txt", currentDate.year, currentDate.month, currentDate.day, currentDate.hour, currentDate.minute);
         char fullPath[128];
         snprintf(fullPath, sizeof(fullPath), "%s/%s", STORAGE_APP_DATA_PATH_PREFIX, dateTimeStr);
-
+        
         if(!storage_file_open(file, fullPath, FSAM_WRITE, FSOM_CREATE_ALWAYS)) {
             FURI_LOG_E(TAG, "Failed to open file");
             storage_file_free(file);

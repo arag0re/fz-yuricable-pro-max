@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="J-Link" type="com.jetbrains.cidr.embedded.customgdbserver.type" factoryName="com.jetbrains.cidr.embedded.customgdbserver.factory" PROGRAM_PARAMS="-if SWD -device STM32WB55RG -vd" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="fz-yuricable-pro-max" TARGET_NAME="yuricable.elf" CONFIG_NAME="yuricable.elf" version="1" RUN_PATH="$USER_HOME$/.ufbt/current/firmware.elf">
+    <custom-gdb-server version="1" gdb-connect="tcp:localhost:2331" executable="/Applications/SEGGER/JLink_V796a/JLinkGDBServerCLExe" warmup-ms="5000" download-type="ALWAYS" reset-cmd="monitor reset; load" reset-type="AFTER_DOWNLOAD">
+      <debugger toolchainName="UFBT" />
+    </custom-gdb-server>
+    <method v="2">
+      <option name="CLION.COMPOUND.BUILD" enabled="true" />
+    </method>
+  </configuration>
+</component>

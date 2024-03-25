@@ -1,9 +1,7 @@
 #pragma once
-
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-
 
 #define COMMAND_LENGTH 16
 
@@ -32,7 +30,10 @@ void usb_uart_disable(UsbUartBridge* usb_uart);
 
 void usb_uart_set_config(UsbUartBridge* usb_uart, UsbUartConfig* cfg);
 
-void usb_uart_set_command_callback(UsbUartBridge* usb_uart, UsbUartBridgeCommand callback, void* context);
+void usb_uart_set_command_callback(
+    UsbUartBridge* usb_uart,
+    UsbUartBridgeCommand callback,
+    void* context);
 
 void usb_uart_get_config(UsbUartBridge* usb_uart, UsbUartConfig* cfg);
 
