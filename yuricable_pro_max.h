@@ -1,11 +1,12 @@
 #pragma once
 #include <furi.h>
+#include <furi_hal_light.h>
 #include <gui/gui.h>
 #include <gui/view_dispatcher.h>
 #include <gui/scene_manager.h>
 #include <gui/modules/widget.h>
 #include <gui/modules/submenu.h>
-#include <furi_hal_light.h>
+#include <power/power_service/power.h>
 #include "lib/sdq/sdq_device.c"
 
 typedef enum { EventTypeKey } EventType;
@@ -65,6 +66,9 @@ typedef struct App {
     FuriMutex* mutex;
     YuriCableData* data;
     FuriThread* led_thread;
+    FuriThread* battery_info_update_thread;
+    Power* power;
+    PowerInfo info;
 } App;
 
 typedef enum {
