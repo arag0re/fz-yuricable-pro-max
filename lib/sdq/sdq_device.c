@@ -88,57 +88,52 @@ static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
                     bus->commandExecuted = true;
                     break;
                 case SDQDeviceCommand_SN:
-                    if(sdq_device_send(bus, responses.SN, sizeof(responses.SN), true, true)) {
+                    if(sdq_device_send(bus, responses.SN, sizeof(responses.SN))) {
                         bus->commandExecuted = true;
                         sdq_device_stop(bus);
                     }
                     break;
                 case SDQDeviceCommand_RESET:
-                    if(sdq_device_send(bus, responses.RESET_DEVICE, sizeof(responses.RESET_DEVICE), true, true)) {
+                    if(sdq_device_send(bus, responses.RESET_DEVICE, sizeof(responses.RESET_DEVICE))) {
                         bus->commandExecuted = true;
                         sdq_device_stop(bus);
                     }
                     break;
                 case SDQDeviceCommand_DFU:
                     if(bus->resetInProgress) {
-                        if(sdq_device_send(bus, responses.DFU, sizeof(responses.DFU), true, true)) {
+                        if(sdq_device_send(bus, responses.DFU, sizeof(responses.DFU))) {
                             bus->resetInProgress = false;
                             bus->commandExecuted = true;
                             sdq_device_stop(bus);
                         }
                     } else {
-                        if(sdq_device_send(
-                               bus,
-                               responses.RESET_DEVICE,
-                               sizeof(responses.RESET_DEVICE),
-                               true,
-                               true)) {
+                        if(sdq_device_send(bus,responses.RESET_DEVICE, sizeof(responses.RESET_DEVICE))) {
                             bus->resetInProgress = true;
                         }
                     }
                     break;
                 case SDQDeviceCommand_DCSD:
                     if(bus->resetInProgress) {
-                        if(sdq_device_send(bus, responses.USB_UART, sizeof(responses.USB_UART), true, true)) {
+                        if(sdq_device_send(bus, responses.USB_UART, sizeof(responses.USB_UART))) {
                             bus->resetInProgress = false;
                             bus->commandExecuted = true;
                             sdq_device_stop(bus);
                         }
                     } else {
-                        if(sdq_device_send(bus, responses.RESET_DEVICE, sizeof(responses.RESET_DEVICE), true, true)) {
+                        if(sdq_device_send(bus, responses.RESET_DEVICE, sizeof(responses.RESET_DEVICE))) {
                             bus->resetInProgress = true;
                         }
                     }
                     break;
                 case SDQDeviceCommand_CHARGING:
                     sdq_delay_us(300);
-                    if(sdq_device_send(bus, responses.USB_UART, sizeof(responses.USB_UART), true, false)) {
+                    if(sdq_device_send(bus, responses.USB_UART, sizeof(responses.USB_UART))) {
                     }
                     break;
                 case SDQDeviceCommand_JTAG:
                     break;
                 case SDQDeviceCommand_RECOVERY:
-                    if(sdq_device_send(bus, responses.USB_UART, sizeof(responses.USB_UART), true, true)) {
+                    if(sdq_device_send(bus, responses.USB_UART, sizeof(responses.USB_UART))) {
                         usb_uart_send_data( bus->uart_bridge, RECOVERY_PLIST, sizeof(RECOVERY_PLIST));
                         bus->commandExecuted = true;
                         sdq_device_stop(bus);
@@ -151,14 +146,14 @@ static inline bool sdq_device_receive_and_process_command(SDQDevice* bus) {
                 break;
             case TRISTAR_UNKNOWN_76:
                 FURI_LOG_I("SDQ", "TRISTAR_UNKNOWN_76");
-                sdq_device_send(bus, responses.UNKNOWN_76_ANSWER, sizeof(responses.UNKNOWN_76_ANSWER), false, true);
+                sdq_device_send(bus, responses.UNKNOWN_76_ANSWER, sizeof(responses.UNKNOWN_76_ANSWER));
                 break;
             case TRISTAR_POWER:
                 sdq_delay_us(20);
-                sdq_device_send(bus, responses.POWER_ANSWER, 1, false, false);
+                sdq_device_send(bus, responses.POWER_ANSWER, 1);
                 break;
             case TRISTAR_SERVICEMODE_ANSWER:
-                sdq_device_send(bus, responses.KEYSET, sizeof(responses.KEYSET), true, true);
+                sdq_device_send(bus, responses.KEYSET, sizeof(responses.KEYSET));
                 break;
             //case TRISTART_POWER_LAST:
             //    sdq_device_send(
@@ -275,7 +270,6 @@ static void sdq_device_send_byte(SDQDevice* bus, uint8_t byte) {
 }
 
 bool sdq_device_send(SDQDevice* bus, const uint8_t data[], size_t data_size) {
-    const SDQTimings* timings = &bus->timings;
     static uint8_t response_buffer[64];
     if(data_size > 63) {
         return false;
