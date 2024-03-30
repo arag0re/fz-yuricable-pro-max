@@ -1,21 +1,28 @@
+[![Build and Release FAP](https://img.shields.io/github/actions/workflow/status/arag0re/fz-yuricable-pro-max/.github%2Fworkflows%2Ffapping.yml)]()
+[![GitHub Release](https://img.shields.io/github/v/release/arag0re/fz-yuricable-pro-max)]()
+[![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
+![GitHub Repo stars](https://img.shields.io/github/stars/arag0re/fz-yuricable-pro-max)
+![GitHub watchers](https://img.shields.io/github/watchers/arag0re/fz-yuricable-pro-max)
+![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/arag0re)
+
 # YuriCable Pro Max
 
 Implementation to use a Flipper-Zero as SWD/DCSD-Cable for iPhones just like known Kanzi/Kong/Tamarin Cables
 
 > ![](docs/YuriCableLogo.svg)
 
-## Star History
+![](docs/FlipperYuriCable.jpg)
 
-[![Star History Chart](https://api.star-history.com/svg?repos=arag0re/fz-yuricable-pro-max&type=Timeline)](https://star-history.com/#arag0re/fz-yuricable-pro-max&Timeline)
+## Tested iPhones or Accessories
 
-## Tested iPhones:
-
-| iPhone      | DCSD | Reset | DFU | JTAG |
-| ----------- | --- | ------ | --- | ---- |
-| 14 Pro Max  |  ✅  |  ✅  |  ✅  |  ❌   |
-| 14 Pro      |  ✅  |  ✅  |  ✅  |  ❌   |
-| SE (2022)   |  ✅  |  ✅  |  ✅  |  ❌   |
-| XS          |  ❌  |  ❌  |  ❌  |  ❌   |
+| iPhone      | DCSD | Reset | DFU | 5V Charging| JTAG |
+| ----------- | ---- | ----- | --- | -- | ---- |
+| 14 Pro Max  |  ✅  |   ✅   |  ✅  | ❌ |  ❌  |
+| 14 Pro      |  ✅  |   ✅   |  ✅  | ❌ |  ❌  |
+| SE (2022)   |  ✅  |   ✅   |  ✅  | ❌ |  ❌  |
+| XS          |  ❌  |   ❌   |  ❌  | ❌ |  ❌  |
+| Airpods Max |  ❌  |   ❌   |  ❌  | ✅ |  ❌  |
+| AirPods Pro 1.Gen | ❌ | ❌ | ❌ |  ✅ | ❌ |
 
 ## Thanks
 
@@ -36,7 +43,6 @@ Credits to [@stacksmashing](https://github.com/stacksmashing) for an example pi 
 on this subject. (
 watch [here](https://www.youtube.com/watch?v=8p3Oi4DL0eI&list=PL0P69gP-VL8eSCSNY-gQefgY1DXBSlNJC&index=6&))
 
-
 ## Project Setup
 
 ### Install Build-Tool
@@ -53,15 +59,7 @@ python -m pip install --upgrade ufbt
 ufbt update --channel=release
 ```
 
-#### Build App and flash firmware including the app to the flipper  
-
-+ Flash Firmware to the Flipper
-
-```shell
-ufbt flash_usb
-```
-
-+ VSCode setup and build
+### VSCode setup and build
 
 ```shell
 ufbt faps vscode_dist
@@ -72,8 +70,8 @@ ufbt faps vscode_dist
 ```shell
 ufbt vscode_dist
 ```
-+ then build it using the commands in section `Build FAP`
 
++ then build it using the commands in section `Build FAP`
 
 ### Build FAP
 
@@ -92,6 +90,7 @@ ufbt launch
 ```
 
 ## Pinout Flipper / Lightning Breakout
+
 | Cable | Flipper |
 | ----- | ------- |
 | Yellow (ID0) | PA7 (PIN 2) |
@@ -102,7 +101,17 @@ ufbt launch
 
 ### Open in CLion
 
-Open the Project in CLion
+Prerequesities:
++ UFBT has to be installed already
++ CLion needs to be installed ofc
++ Git && Git-LFS
+
+Its suggested to have CLion-script installed. Its describe how to set it up in [JetBrains Docs](https://www.jetbrains.com/help/clion/working-with-the-ide-features-from-command-line.html).
+
+1. Open a CMD/Bash/Git-Bash/Pwsh or whatever shell you use
+2. Clone respository: `git clone https://github.com/arag0re/fz-yuricable-pro-max`
+3. CD into cloned repositoy: `cd fz-yuricable-pro-max`
+4. Then open the project in CLion: `clion .`
 
 ## Flipper Docs
 
@@ -144,7 +153,7 @@ Then update the Firmware of the JLink.
 
 + Pinoout of the Segger J-Link
 
-<img src="docs/JLINK.png" alt="JLINK" height="500px"/>
+![](docs/JLINK.png)
 
 #### Pin Mapping
 
@@ -159,12 +168,12 @@ __________________________
 09 (3v3)     |  1 (VTref)
 ```
 
-<img src="docs/FlipperJLINK.jpg" alt="FlipperJLINK" height="850px"/>
+![](docs/FlipperJLINK.jpg)
 
 or buy a JTAG Adapter for Flipper Zero by [@jrozner](https://twitter.com/jrozner)
 on [Tindie](https://www.tindie.com/products/cuttrace/flipper-zero-jlink-adapter/) and extend the GPIO-Pins
 
-<img src="docs/flipper_jlink_adapter.jpg" alt="FlipperJLINKAdapter" height="850px"/>
+![](docs/flipper_jlink_adapter.jpg)
 
 ## Docs
 
@@ -177,6 +186,10 @@ on [Tindie](https://www.tindie.com/products/cuttrace/flipper-zero-jlink-adapter/
 
 + DWT_CYCCNT
   explained: [ARM DOCS](https://developer.arm.com/documentation/ddi0403/d/Debug-Architecture/ARMv7-M-Debug/The-Data-Watchpoint-and-Trace-unit/CYCCNT-cycle-counter-and-related-timers?lang=en)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=arag0re/fz-yuricable-pro-max&type=Timeline)](https://star-history.com/#arag0re/fz-yuricable-pro-max&Timeline)
 
 ## Class Diagramm
 
