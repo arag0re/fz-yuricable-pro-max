@@ -48,12 +48,18 @@ jobs:
              sdk-channel: ${{ matrix.sdk-channel }}
              sdk-index-url: ${{ matrix.sdk-index-url }}
          
-         
          - name: Upload app artifacts
            uses: actions/upload-artifact@v4
            with:
              name: ${{ github.event.repository.name }}-${{ steps.build-app.outputs.suffix }}
              path: ${{ steps.build-app.outputs.fap-artifacts }}
+             
+         - name: Lint sources
+           uses: flipperdevices/flipperzero-ufbt-action@v0.1
+           with:
+             # skip SDK setup, we already did it in previous step
+             skip-setup: true
+             task: lint
 
          - name: Rename FAP file
            run: |
