@@ -11,7 +11,16 @@ permissions:
 jobs:
    build:
       runs-on: ubuntu-latest
-
+      strategy:
+         matrix:
+           include:
+             - name: dev channel
+               sdk-channel: dev
+             - name: release channel
+               sdk-channel: release
+             - name: Momentum firmware
+               sdk-index-url: https://up.momentum-fw.dev/firmware/directory.json
+               sdk-channel: release
       steps:
          - uses: actions/checkout@v4
            with:
@@ -23,9 +32,17 @@ jobs:
            with:
               python-version: '3.11' # Set up the Python version
 
-         - name: Build Flipper Application Package (.fap)
-           uses: flipperdevices/flipperzero-ufbt-action@v0.1.3
+         - name: 'ufbt: Build for ${{ matrix.name }}'
+           uses: flipperdevices/flipperzero-ufbt-action@v0.1
            id: build-app
+           with:
+             sdk-channel: ${{ matrix.sdk-channel }}
+             sdk-index-url: ${{ matrix.sdk-index-url }}
+         
+         
+         #- name: Build Flipper Application Package (.fap)
+         #  uses: flipperdevices/flipperzero-ufbt-action@v0.1.3
+         #  id: build-app
            #with:
            #  sdk-branch: 0.97.1
 
