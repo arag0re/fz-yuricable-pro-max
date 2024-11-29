@@ -73,6 +73,7 @@ static void vcp_on_cdc_tx_complete(void* context);
 static void vcp_on_cdc_rx(void* context);
 static void vcp_state_callback(void* context, uint8_t state);
 static void vcp_on_cdc_control_line(void* context, uint8_t state);
+static void vcp_on_line_config(void* context, struct usb_cdc_line_coding* config);
 
 static const CdcCallbacks cdc_cb = {
     vcp_on_cdc_tx_complete,
