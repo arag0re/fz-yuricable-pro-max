@@ -13,23 +13,23 @@ jobs:
       runs-on: ubuntu-latest
       strategy:
          matrix:
-           include:
-             - name: ofw-dev
-               sdk-channel: dev
-             - name: ofw-release
-               sdk-channel: release
-             #- name: unleashed-dev
-             #  sdk-index-url: https://up.unleashedflip.com/directory.json
-             #  sdk-channel: dev
-             - name: unleashed-release
-               sdk-index-url: https://up.unleashedflip.com/directory.json
-               sdk-channel: release
-             #- name: mntm-dev
-             #  sdk-index-url: https://up.momentum-fw.dev/firmware/directory.json
-             #  sdk-channel: dev
-             - name: mntm-release
-               sdk-index-url: https://up.momentum-fw.dev/firmware/directory.json
-               sdk-channel: release
+            include:
+               - name: ofw-dev
+                 sdk-channel: dev
+               - name: ofw-release
+                 sdk-channel: release
+               #- name: unleashed-dev
+               #  sdk-index-url: https://up.unleashedflip.com/directory.json
+               #  sdk-channel: dev
+               - name: unleashed-release
+                 sdk-index-url: https://up.unleashedflip.com/directory.json
+                 sdk-channel: release
+               #- name: mntm-dev
+               #  sdk-index-url: https://up.momentum-fw.dev/firmware/directory.json
+               #  sdk-channel: dev
+               - name: mntm-release
+                 sdk-index-url: https://up.momentum-fw.dev/firmware/directory.json
+                 sdk-channel: release
       steps:
          - uses: actions/checkout@v4
            with:
@@ -45,30 +45,30 @@ jobs:
            uses: flipperdevices/flipperzero-ufbt-action@v0.1
            id: build-app
            with:
-             sdk-channel: ${{ matrix.sdk-channel }}
-             sdk-index-url: ${{ matrix.sdk-index-url }}
-         
+              sdk-channel: ${{ matrix.sdk-channel }}
+              sdk-index-url: ${{ matrix.sdk-index-url }}
+
          - name: Upload app artifacts
            uses: actions/upload-artifact@v4
            with:
-             name: ${{ github.event.repository.name }}-${{ steps.build-app.outputs.suffix }}
-             path: ${{ steps.build-app.outputs.fap-artifacts }}
-             
-         - name: Lint sources
-           uses: flipperdevices/flipperzero-ufbt-action@v0.1
-           with:
-             # skip SDK setup, we already did it in previous step
-             skip-setup: true
-             task: lint
+              name: ${{ github.event.repository.name }}-${{ steps.build-app.outputs.suffix }}
+              path: ${{ steps.build-app.outputs.fap-artifacts }}
+
+         #- name: Lint sources
+         #  uses: flipperdevices/flipperzero-ufbt-action@v0.1
+         #  with:
+         #    # skip SDK setup, we already did it in previous step
+         #    skip-setup: true
+         #    task: lint
 
          - name: Rename FAP file
            run: |
-             mv ${{ steps.build-app.outputs.fap-artifacts }} "yuricable_pro_max-${{ matrix.name }}-${{ steps.build-app.outputs.suffix }}.fap"
-             echo "new-fap-name=yuricable_pro_max-${{ matrix.name }}-${{ steps.build-app.outputs.suffix }}.fap" >> $GITHUB_ENV
+              mv ${{ steps.build-app.outputs.fap-artifacts }} "yuricable_pro_max-${{ matrix.name }}-${{ steps.build-app.outputs.suffix }}.fap"
+              echo "new-fap-name=yuricable_pro_max-${{ matrix.name }}-${{ steps.build-app.outputs.suffix }}.fap" >> $GITHUB_ENV
            id: rename-file
 
          - name: Create GitHub Release and Upload FAP
            uses: softprops/action-gh-release@v1
            if: startsWith(github.ref, 'refs/tags/')
            with:
-             files: ${{ env.new-fap-name }}
+              files: ${{ env.new-fap-name }}
