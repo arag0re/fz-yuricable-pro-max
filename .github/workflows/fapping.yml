@@ -41,7 +41,7 @@ jobs:
          
          
          - name: Upload app artifacts
-           uses: actions/upload-artifact@v3
+           uses: actions/upload-artifact@v4
            with:
              name: ${{ github.event.repository.name }}-${{ steps.build-app.outputs.suffix }}
              path: ${{ steps.build-app.outputs.fap-artifacts }}
@@ -54,7 +54,8 @@ jobs:
          #     files: ${{ steps.build-app.outputs.fap-artifacts }}
          - name: Rename FAP file
            run: |
-             mv ${{ steps.build-app.outputs.fap-artifacts }} "yuricable_pro_max-${{ matrix.name }}.fap"
+             mv ${{ steps.build-app.outputs.fap-artifacts }} "yuricable_pro_max-${{ steps.build-app.outputs.suffix }}.fap"
+             echo "new-fap-name=yuricable_pro_max-${{ steps.build-app.outputs.suffix }}.fap" >> $GITHUB_ENV
            id: rename-file
 
          # Release step
@@ -62,5 +63,5 @@ jobs:
            uses: softprops/action-gh-release@v1
            if: startsWith(github.ref, 'refs/tags/')  # Ensures this step only runs for tag pushes
            with:
-             files: ${{ steps.rename-file.outputs.new-fap-name }} # Use the renamed file here
+             files: ${{ env.new-fap-name }}  # Using the renamed file path from the environment variable
              name: ${{ github.event.repository.name }}-${{ matrix.name }}-${{ steps.build-app.outputs.suffix }}.fap
