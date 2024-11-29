@@ -18,7 +18,10 @@ jobs:
                sdk-channel: dev
              - name: ofw-release
                sdk-channel: release
-             - name: momentum-firmware
+             - name: mntm-dev
+               sdk-index-url: https://up.momentum-fw.dev/firmware/directory.json
+               sdk-channel: dev
+             - name: mntm-release
                sdk-index-url: https://up.momentum-fw.dev/firmware/directory.json
                sdk-channel: release
       steps:
@@ -30,7 +33,7 @@ jobs:
          - name: Setup Python
            uses: actions/setup-python@v4
            with:
-              python-version: '3.11' # Set up the Python version
+              python-version: '3.11'
 
          - name: 'ufbt: Build for ${{ matrix.name }}'
            uses: flipperdevices/flipperzero-ufbt-action@v0.1
@@ -46,22 +49,14 @@ jobs:
              name: ${{ github.event.repository.name }}-${{ steps.build-app.outputs.suffix }}
              path: ${{ steps.build-app.outputs.fap-artifacts }}
 
-         # Release step
-         #- name: Create GitHub Release and Upload FAP
-         #  uses: softprops/action-gh-release@v1
-         #  if: startsWith(github.ref, 'refs/tags/') # Ensures this step only runs for tag pushes
-         #  with:
-         #     files: ${{ steps.build-app.outputs.fap-artifacts }}
          - name: Rename FAP file
            run: |
-             mv ${{ steps.build-app.outputs.fap-artifacts }} "yuricable_pro_max-${{ steps.build-app.outputs.suffix }}.fap"
-             echo "new-fap-name=yuricable_pro_max-${{ steps.build-app.outputs.suffix }}.fap" >> $GITHUB_ENV
+             mv ${{ steps.build-app.outputs.fap-artifacts }} "yuricable_pro_max-${{ matrix.name }}-${{ steps.build-app.outputs.suffix }}.fap"
+             echo "new-fap-name=yuricable_pro_max-${{ matrix.name }}-${{ steps.build-app.outputs.suffix }}.fap" >> $GITHUB_ENV
            id: rename-file
 
-         # Release step
          - name: Create GitHub Release and Upload FAP
            uses: softprops/action-gh-release@v1
-           if: startsWith(github.ref, 'refs/tags/')  # Ensures this step only runs for tag pushes
+           if: startsWith(github.ref, 'refs/tags/')
            with:
-             files: ${{ env.new-fap-name }}  # Using the renamed file path from the environment variable
-             name: ${{ github.event.repository.name }}-${{ matrix.name }}-${{ steps.build-app.outputs.suffix }}.fap
+             files: ${{ env.new-fap-name }}
