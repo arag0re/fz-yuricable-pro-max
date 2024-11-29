@@ -12,11 +12,11 @@
 #include <stm32wbxx_ll_lpuart.h>
 #include <stm32wbxx_ll_usart.h>
 
-#define USB_CDC_PKT_LEN CDC_DATA_SZ
+#define USB_CDC_PKT_LEN      CDC_DATA_SZ
 #define USB_UART_RX_BUF_SIZE (USB_CDC_PKT_LEN * 5)
 
-#define USB_CDC_BIT_DTR (1 << 0)
-#define USB_CDC_BIT_RTS (1 << 1)
+#define USB_CDC_BIT_DTR     (1 << 0)
+#define USB_CDC_BIT_RTS     (1 << 1)
 #define USB_USART_DE_RE_PIN &gpio_ext_pa4
 
 static const GpioPin* flow_pins[][2] = {
@@ -73,7 +73,6 @@ static void vcp_on_cdc_tx_complete(void* context);
 static void vcp_on_cdc_rx(void* context);
 static void vcp_state_callback(void* context, uint8_t state);
 static void vcp_on_cdc_control_line(void* context, uint8_t state);
-static void vcp_on_line_config(void* context, struct usb_cdc_line_coding* config);
 
 static const CdcCallbacks cdc_cb = {
     vcp_on_cdc_tx_complete,
@@ -97,7 +96,10 @@ static void usb_uart_on_irq_rx_dma_cb(
     if(ev & (FuriHalSerialRxEventData | FuriHalSerialRxEventIdle)) {
         uint8_t data[FURI_HAL_SERIAL_DMA_BUFFER_SIZE] = {0};
         while(size) {
-            size_t ret = furi_hal_serial_dma_rx(handle, data, (size > FURI_HAL_SERIAL_DMA_BUFFER_SIZE) ? FURI_HAL_SERIAL_DMA_BUFFER_SIZE : size);
+            size_t ret = furi_hal_serial_dma_rx(
+                handle,
+                data,
+                (size > FURI_HAL_SERIAL_DMA_BUFFER_SIZE) ? FURI_HAL_SERIAL_DMA_BUFFER_SIZE : size);
             furi_stream_buffer_send(usb_uart->rx_stream, data, ret, 0);
             size -= ret;
         };
@@ -136,7 +138,8 @@ static void usb_uart_serial_init(UsbUartBridge* usb_uart, uint8_t uart_ch) {
     usb_uart->serial_handle = furi_hal_serial_control_acquire(uart_ch);
     furi_assert(usb_uart->serial_handle);
     furi_hal_serial_init(usb_uart->serial_handle, 115200);
-    furi_hal_serial_dma_rx_start(usb_uart->serial_handle, usb_uart_on_irq_rx_dma_cb, usb_uart, false);
+    furi_hal_serial_dma_rx_start(
+        usb_uart->serial_handle, usb_uart_on_irq_rx_dma_cb, usb_uart, false);
 }
 
 static void usb_uart_serial_deinit(UsbUartBridge* usb_uart) {
@@ -151,7 +154,8 @@ static void usb_uart_set_baudrate(UsbUartBridge* usb_uart, uint32_t baudrate) {
         furi_hal_serial_set_br(usb_uart->serial_handle, baudrate);
         usb_uart->st.baudrate_cur = baudrate;
     } else {
-        struct usb_cdc_line_coding* line_cfg = furi_hal_cdc_get_port_settings(usb_uart->cfg.vcp_ch);
+        struct usb_cdc_line_coding* line_cfg =
+            furi_hal_cdc_get_port_settings(usb_uart->cfg.vcp_ch);
         if(line_cfg->dwDTERate > 0) {
             furi_hal_serial_set_br(usb_uart->serial_handle, line_cfg->dwDTERate);
             usb_uart->st.baudrate_cur = line_cfg->dwDTERate;
@@ -187,7 +191,8 @@ static int32_t usb_uart_worker(void* context) {
     usb_uart->rx_stream = furi_stream_buffer_alloc(USB_UART_RX_BUF_SIZE, 1);
     usb_uart->tx_sem = furi_semaphore_alloc(1, 1);
     usb_uart->usb_mutex = furi_mutex_alloc(FuriMutexTypeNormal);
-    usb_uart->tx_thread =furi_thread_alloc_ex("UsbUartTxWorker", 2048, usb_uart_tx_thread, usb_uart);
+    usb_uart->tx_thread =
+        furi_thread_alloc_ex("UsbUartTxWorker", 2048, usb_uart_tx_thread, usb_uart);
 
     usb_uart_vcp_init(usb_uart, usb_uart->cfg.vcp_ch);
     usb_uart_serial_init(usb_uart, usb_uart->cfg.uart_ch);
@@ -195,8 +200,10 @@ static int32_t usb_uart_worker(void* context) {
 
     if(usb_uart->cfg.flow_pins != 0) {
         furi_assert((size_t)(usb_uart->cfg.flow_pins - 1) < COUNT_OF(flow_pins));
-        furi_hal_gpio_init_simple(flow_pins[usb_uart->cfg.flow_pins - 1][0], GpioModeOutputPushPull);
-        furi_hal_gpio_init_simple(flow_pins[usb_uart->cfg.flow_pins - 1][1], GpioModeOutputPushPull);
+        furi_hal_gpio_init_simple(
+            flow_pins[usb_uart->cfg.flow_pins - 1][0], GpioModeOutputPushPull);
+        furi_hal_gpio_init_simple(
+            flow_pins[usb_uart->cfg.flow_pins - 1][1], GpioModeOutputPushPull);
         usb_uart_update_ctrl_lines(usb_uart);
     }
 
@@ -214,7 +221,8 @@ static int32_t usb_uart_worker(void* context) {
             if(len > 0) {
                 if(furi_semaphore_acquire(usb_uart->tx_sem, 100) == FuriStatusOk) {
                     usb_uart->st.rx_cnt += len;
-                    furi_check(furi_mutex_acquire(usb_uart->usb_mutex, FuriWaitForever) == FuriStatusOk);
+                    furi_check(
+                        furi_mutex_acquire(usb_uart->usb_mutex, FuriWaitForever) == FuriStatusOk);
                     furi_hal_cdc_send(usb_uart->cfg.vcp_ch, usb_uart->rx_buf, len);
                     save_log_and_write((char*)usb_uart->rx_buf, len);
                     furi_check(furi_mutex_release(usb_uart->usb_mutex) == FuriStatusOk);
@@ -254,13 +262,17 @@ static int32_t usb_uart_worker(void* context) {
             }
             if(usb_uart->cfg.flow_pins != usb_uart->cfg_new.flow_pins) {
                 if(usb_uart->cfg.flow_pins != 0) {
-                    furi_hal_gpio_init_simple(flow_pins[usb_uart->cfg.flow_pins - 1][0], GpioModeAnalog);
-                    furi_hal_gpio_init_simple(flow_pins[usb_uart->cfg.flow_pins - 1][1], GpioModeAnalog);
+                    furi_hal_gpio_init_simple(
+                        flow_pins[usb_uart->cfg.flow_pins - 1][0], GpioModeAnalog);
+                    furi_hal_gpio_init_simple(
+                        flow_pins[usb_uart->cfg.flow_pins - 1][1], GpioModeAnalog);
                 }
                 if(usb_uart->cfg_new.flow_pins != 0) {
                     furi_assert((size_t)(usb_uart->cfg_new.flow_pins - 1) < COUNT_OF(flow_pins));
-                    furi_hal_gpio_init_simple(flow_pins[usb_uart->cfg_new.flow_pins - 1][0], GpioModeOutputPushPull);
-                    furi_hal_gpio_init_simple(flow_pins[usb_uart->cfg_new.flow_pins - 1][1], GpioModeOutputPushPull);
+                    furi_hal_gpio_init_simple(
+                        flow_pins[usb_uart->cfg_new.flow_pins - 1][0], GpioModeOutputPushPull);
+                    furi_hal_gpio_init_simple(
+                        flow_pins[usb_uart->cfg_new.flow_pins - 1][1], GpioModeOutputPushPull);
                 }
                 usb_uart->cfg.flow_pins = usb_uart->cfg_new.flow_pins;
                 events |= WorkerEvtCtrlLineSet;
@@ -269,9 +281,11 @@ static int32_t usb_uart_worker(void* context) {
                 usb_uart->cfg.software_de_re = usb_uart->cfg_new.software_de_re;
                 if(usb_uart->cfg.software_de_re != 0) {
                     furi_hal_gpio_write(USB_USART_DE_RE_PIN, true);
-                    furi_hal_gpio_init(USB_USART_DE_RE_PIN, GpioModeOutputPushPull, GpioPullNo, GpioSpeedMedium);
+                    furi_hal_gpio_init(
+                        USB_USART_DE_RE_PIN, GpioModeOutputPushPull, GpioPullNo, GpioSpeedMedium);
                 } else {
-                    furi_hal_gpio_init(USB_USART_DE_RE_PIN, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
+                    furi_hal_gpio_init(
+                        USB_USART_DE_RE_PIN, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
                 }
             }
             api_lock_unlock(usb_uart->cfg_lock);
@@ -320,7 +334,8 @@ static int32_t usb_uart_tx_thread(void* context) {
     uint8_t* command_buffer = malloc(COMMAND_LENGTH);
     uint8_t data[USB_CDC_PKT_LEN];
     while(1) {
-        uint32_t events = furi_thread_flags_wait(WORKER_ALL_TX_EVENTS, FuriFlagWaitAny, FuriWaitForever);
+        uint32_t events =
+            furi_thread_flags_wait(WORKER_ALL_TX_EVENTS, FuriFlagWaitAny, FuriWaitForever);
         furi_check(!(events & FuriFlagError));
         if(events & WorkerEvtTxStop) break;
         if(events & WorkerEvtCdcRx) {
@@ -359,14 +374,16 @@ static int32_t usb_uart_tx_thread(void* context) {
                             command_buffer[command_length - 1] = 0;
                         }
 
-                        FuriString* message = usb_uart->commandCallback((char*)command_buffer + 1, usb_uart->commandContext);
+                        FuriString* message = usb_uart->commandCallback(
+                            (char*)command_buffer + 1, usb_uart->commandContext);
                         if(message != NULL) {
                             FuriString* new_line = furi_string_alloc_set_str("\n\r");
                             furi_string_cat(message, new_line);
                             furi_string_cat(new_line, message);
 
                             const char* c_message = furi_string_get_cstr(new_line);
-                            furi_hal_cdc_send(usb_uart->cfg.vcp_ch, (uint8_t*)c_message, strlen(c_message));
+                            furi_hal_cdc_send(
+                                usb_uart->cfg.vcp_ch, (uint8_t*)c_message, strlen(c_message));
 
                             free((char*)c_message);
                             furi_string_free(new_line);

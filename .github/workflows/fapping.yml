@@ -18,15 +18,15 @@ jobs:
                sdk-channel: dev
              - name: ofw-release
                sdk-channel: release
-             - name: unleashed-dev
-               sdk-index-url: https://up.unleashedflip.com/directory.json
-               sdk-channel: dev
+             #- name: unleashed-dev
+             #  sdk-index-url: https://up.unleashedflip.com/directory.json
+             #  sdk-channel: dev
              - name: unleashed-release
                sdk-index-url: https://up.unleashedflip.com/directory.json
                sdk-channel: release
-             - name: mntm-dev
-               sdk-index-url: https://up.momentum-fw.dev/firmware/directory.json
-               sdk-channel: dev
+             #- name: mntm-dev
+             #  sdk-index-url: https://up.momentum-fw.dev/firmware/directory.json
+             #  sdk-channel: dev
              - name: mntm-release
                sdk-index-url: https://up.momentum-fw.dev/firmware/directory.json
                sdk-channel: release
