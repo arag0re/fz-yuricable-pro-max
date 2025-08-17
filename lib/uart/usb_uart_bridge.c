@@ -58,10 +58,10 @@ struct UsbUartBridge {
 
     FuriSemaphore* tx_sem;
 
+    UsbUartState st;
+
     UsbUartBridgeCommand commandCallback;
     void* commandContext;
-
-    UsbUartState st;
 
     FuriApiLock cfg_lock;
 
@@ -202,7 +202,6 @@ static int32_t usb_uart_worker(void* context) {
     usb_uart_vcp_init(usb_uart, usb_uart->cfg.vcp_ch);
     usb_uart_serial_init(usb_uart, usb_uart->cfg.uart_ch);
     usb_uart_set_baudrate(usb_uart, usb_uart->cfg.baudrate);
-
     if(usb_uart->cfg.flow_pins != 0) {
         furi_assert((size_t)(usb_uart->cfg.flow_pins - 1) < COUNT_OF(flow_pins));
         furi_hal_gpio_init_simple(
@@ -400,7 +399,6 @@ static int32_t usb_uart_tx_thread(void* context) {
                     }
                     continue;
                 }
-
                 if(usb_uart->cfg.software_de_re != 0)
                     furi_hal_gpio_write(USB_USART_DE_RE_PIN, false);
 
@@ -413,7 +411,6 @@ static int32_t usb_uart_tx_thread(void* context) {
             }
         }
     }
-    free(command_buffer);
     return 0;
 }
 
