@@ -6,7 +6,7 @@
 #define TAG "YuriStorage"
 #define STORAGE_FILE_BUF_LEN 5
 #define END_MARKER "======== End of iBoot serial output. ========"
-#define MAX_BUFFER_SIZE 112000
+#define MAX_BUFFER_SIZE 10000
 
 char aggregate_buffer[MAX_BUFFER_SIZE];
 size_t aggregate_buffer_len = 0;
