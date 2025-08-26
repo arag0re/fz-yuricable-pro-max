@@ -2,16 +2,8 @@
 #include <yuricable_pro_max_icons.h>
 
 #define BACKLIGHT_ON 1
-#define TAG "YURICABLE_PRO_MAX"
-#define SDQ_PIN gpio_ext_pa7 // GPIO 2
-
-const char* yuricable_get_submenu_title_string(YuriCableProMaxSubmenuTitles title) {
-    if(title < YuriCableProMaxSubmenuTitlesCount) {
-        return YuriCableProMaxSubmenuTitlesStrings[title];
-    } else {
-        return "Unknown";
-    }
-}
+#define TAG          "YURICABLE_PRO_MAX"
+#define SDQ_PIN      gpio_ext_pa7 // GPIO 2
 
 static void yuricable_battery_info_update_model(void* ctx) {
     furi_assert(ctx);
@@ -20,7 +12,7 @@ static void yuricable_battery_info_update_model(void* ctx) {
 }
 
 static void yuricable_draw_battery_consumption(Widget* widget, double cons) {
-    FuriString* string = furi_string_alloc_set("------------------------");
+    FuriString* string = furi_string_alloc();
     if(cons >= 0) {
         furi_string_printf(string, "-- Battery Utilization");
     } else if(cons < -1) {
@@ -28,8 +20,7 @@ static void yuricable_draw_battery_consumption(Widget* widget, double cons) {
     } else {
         furi_string_printf(string, "%3.f%% Battery Utilization", -(cons * 1000));
     }
-    widget_add_string_element(
-        widget, 20, 45, AlignLeft, AlignCenter, FontSecondary, furi_string_get_cstr(string));
+    widget_add_string_element(widget, 15, 45, AlignLeft, AlignCenter, FontSecondary, furi_string_get_cstr(string));
     furi_string_free(string);
 }
 
@@ -38,6 +29,7 @@ static int32_t yuricable_led_worker(void* ctx) {
     App* app = (App*)ctx;
     while(1) {
         uint32_t events = furi_thread_flags_get();
+        furi_delay_ms(10);
         if(events & WorkerEvtStop) {
             break;
         }
@@ -117,18 +109,14 @@ FuriString* yuricable_command_callback(char* command, void* ctx) {
 void yuricable_menu_callback(void* ctx, uint32_t index) {
     furi_assert(ctx);
     App* app = ctx;
+    FURI_LOG_I(TAG, "submenu cb index=%lu", index);
     switch(index) {
-    case YuriCableProMaxMainMenuSceneDCSD:
-        scene_manager_handle_custom_event(app->scene_manager, YuriCableProMaxMainMenuSceneDCSDModeEvent);
-        break;
-    case YuriCableProMaxMainMenuSceneReset:
-        scene_manager_handle_custom_event(app->scene_manager, YuriCableProMaxMainMenuSceneResetModeEvent);
-        break;
-    case YuriCableProMaxMainMenuSceneDFU:
-        scene_manager_handle_custom_event(app->scene_manager, YuriCableProMaxMainMenuSceneDFUModeEvent);
-        break;
-    case YuriCableProMaxMainMenuSceneCharging:
-        scene_manager_handle_custom_event(app->scene_manager, YuriCableProMaxMainMenuSceneChargingModeEvent);
+    case 0: scene_manager_handle_custom_event(app->scene_manager, YuriCableProMaxMainMenuSceneDCSDModeEvent); break;
+    case 1: scene_manager_handle_custom_event(app->scene_manager, YuriCableProMaxMainMenuSceneResetModeEvent); break;
+    case 2: scene_manager_handle_custom_event(app->scene_manager, YuriCableProMaxMainMenuSceneDFUModeEvent); break;
+    case 3: scene_manager_handle_custom_event(app->scene_manager, YuriCableProMaxMainMenuSceneChargingModeEvent); break;
+    default:
+        FURI_LOG_E(TAG, "submenu index out of range: %lu", index);
         break;
     }
 }
@@ -137,43 +125,45 @@ void yuricable_main_menu_scene_on_enter(void* ctx) {
     furi_assert(ctx);
     App* app = ctx;
     submenu_reset(app->submenu);
-    submenu_set_header(app->submenu, yuricable_get_submenu_title_string(YuriCableProMaxMainMenuTitle));
-    submenu_add_item( app->submenu, yuricable_get_submenu_title_string(YuriCableProMaxDCSDSubmenuTitle), YuriCableProMaxMainMenuSceneDCSD, yuricable_menu_callback, app);
-    submenu_add_item(app->submenu, yuricable_get_submenu_title_string(YuriCableProMaxResetSubmenuTitle), YuriCableProMaxMainMenuSceneReset, yuricable_menu_callback, app);
-    submenu_add_item(app->submenu, yuricable_get_submenu_title_string(YuriCableProMaxDFUSubmenuTitle), YuriCableProMaxMainMenuSceneDFU, yuricable_menu_callback, app);
-    submenu_add_item(app->submenu, yuricable_get_submenu_title_string(YuriCableProMaxChargingSubmenuTitle), YuriCableProMaxMainMenuSceneCharging, yuricable_menu_callback, app);
+    submenu_set_header(app->submenu, "YuriCable Pro Max");
+    submenu_add_item(app->submenu, "DCSD - Bootlog", 0, yuricable_menu_callback, app);
+    submenu_add_item(app->submenu, "Force Reset", 1, yuricable_menu_callback, app);
+    submenu_add_item(app->submenu, "Force DFU", 2, yuricable_menu_callback, app);
+    submenu_add_item(app->submenu, "5V Charging", 3, yuricable_menu_callback, app);
     view_dispatcher_switch_to_view(app->view_dispatcher, YuriCableProMaxSubmenuView);
+    submenu_set_selected_item(app->submenu, app->data->selectedSubmenu);
 }
 
 bool yuricable_main_menu_scene_on_event(void* ctx, SceneManagerEvent event) {
     furi_assert(ctx);
     App* app = ctx;
     bool consumed = false;
+    FURI_LOG_I(TAG, "scene event type=%d, event=%lu", event.type, event.event);
     switch(event.type) {
     case SceneManagerEventTypeCustom:
         switch(event.event) {
         case YuriCableProMaxMainMenuSceneDCSDModeEvent:
             app->data->sdq->runCommand = SDQDeviceCommand_DCSD;
-            app->data->selectedSubmenu = YuriCableProMaxDCSDSubmenuTitle;
+            app->data->selectedSubmenu = 0;
             scene_manager_next_scene(app->scene_manager, YuriCableProMaxDCSDScene);
             consumed = true;
             break;
         case YuriCableProMaxMainMenuSceneResetModeEvent:
             app->data->sdq->runCommand = SDQDeviceCommand_RESET;
-            app->data->selectedSubmenu = YuriCableProMaxResetSubmenuTitle;
+            app->data->selectedSubmenu = 1;
             scene_manager_next_scene(app->scene_manager, YuriCableProMaxResetScene);
             consumed = true;
             break;
         case YuriCableProMaxMainMenuSceneDFUModeEvent:
             app->data->sdq->runCommand = SDQDeviceCommand_DFU;
-            app->data->selectedSubmenu = YuriCableProMaxDFUSubmenuTitle;
+            app->data->selectedSubmenu = 2;
             scene_manager_next_scene(app->scene_manager, YuriCableProMaxDFUScene);
             consumed = true;
             break;
         case YuriCableProMaxMainMenuSceneChargingModeEvent:
             app->data->sdq->runCommand = SDQDeviceCommand_CHARGING;
-            app->data->selectedSubmenu = YuriCableProMaxChargingSubmenuTitle;
-            scene_manager_next_scene(app->scene_manager, YuriCableProMaxCharginScene);
+            app->data->selectedSubmenu = 3;
+            scene_manager_next_scene(app->scene_manager, YuriCableProMaxChargingScene);
             consumed = true;
             break;
         }
@@ -190,17 +180,17 @@ static int32_t yuricable_update_battery_consumption_worker(void* ctx) {
     App* app = ctx;
     while(1) {
         uint32_t events = furi_thread_flags_get();
+        furi_delay_ms(10);
         if(events & WorkerEvtStop) {
             break;
         }
-        float consumption = app->info.current_gauge;
         widget_reset(app->widget);
-        widget_add_string_element(app->widget, 25, 15, AlignLeft, AlignCenter, FontPrimary, yuricable_get_submenu_title_string(app->data->selectedSubmenu));
-        widget_add_string_element(app->widget, 15, 30, AlignLeft, AlignCenter, FontSecondary, "Connect an iPhone now!");
-        yuricable_draw_battery_consumption(app->widget, (double)consumption);
-        widget_add_string_element(app->widget, 15, 45, AlignLeft, AlignCenter, FontSecondary, "+");
+        widget_add_string_element(app->widget, 15, 15, AlignLeft, AlignCenter, FontPrimary,   "Lightning Charging");
+        widget_add_string_element(app->widget, 15, 30, AlignLeft, AlignCenter, FontSecondary, "Waiting for Device...");
+        yuricable_draw_battery_consumption(app->widget, (double)app->info.current_gauge);
+        //widget_add_string_element(app->widget, 15, 45, AlignLeft, AlignCenter, FontSecondary, "+");
         yuricable_battery_info_update_model(app);
-        furi_delay_ms(500);
+        furi_delay_ms(490);
     }
     return 0;
 }
@@ -210,19 +200,22 @@ void yuricable_sdq_scene_on_enter(void* ctx) {
     App* app = ctx;
     widget_reset(app->widget);
     sdq_device_start(app->data->sdq);
-    widget_add_string_element(app->widget, 25, 15, AlignLeft, AlignCenter, FontPrimary, yuricable_get_submenu_title_string(app->data->selectedSubmenu));
-    widget_add_string_element(app->widget, 15, 30, AlignLeft, AlignCenter, FontSecondary, "Connect an iPhone now!");
-    if(app->data->sdq->runCommand == SDQDeviceCommand_CHARGING &&
-       !furi_hal_power_check_otg_fault()) {
+    if(app->data->selectedSubmenu == YuriCableProMaxDCSDSubmenuTitle) {
+        widget_add_string_element(app->widget, 15, 15, AlignLeft, AlignCenter, FontPrimary,   "DCSD - iBoot-log");
+        widget_add_string_element(app->widget, 15, 30, AlignLeft, AlignCenter, FontSecondary, "Waiting for iPhone...");
+    } 
+    if(app->data->selectedSubmenu == YuriCableProMaxChargingSubmenuTitle) {
         furi_hal_power_enable_otg();
         furi_hal_power_insomnia_enter();
+        widget_add_string_element(app->widget, 15, 15, AlignLeft, AlignCenter, FontPrimary,   "Lightning Charging");
+        widget_add_string_element(app->widget, 15, 30, AlignLeft, AlignCenter, FontSecondary, "Waiting for Device...");
         float consumption = app->info.current_gauge;
         yuricable_draw_battery_consumption(app->widget, (double)consumption);
-        widget_add_string_element(app->widget, 15, 45, AlignLeft, AlignCenter, FontSecondary, "+");
+        //widget_add_string_element(app->widget, 15, 45, AlignLeft, AlignCenter, FontSecondary, "+");
         furi_thread_start(app->battery_info_update_thread);
     }
-    view_dispatcher_switch_to_view(app->view_dispatcher, YuriCableProMaxWidgetView);
-}
+        view_dispatcher_switch_to_view(app->view_dispatcher, YuriCableProMaxWidgetView);
+    }
 
 bool yuricable_sdq_scene_on_event(void* ctx, SceneManagerEvent event) {
     UNUSED(ctx);
@@ -236,13 +229,12 @@ void yuricable_sdq_scene_on_exit(void* ctx) {
     if(app->data->sdq->listening) {
         sdq_device_stop(app->data->sdq);
     }
-    if(app->data->sdq->runCommand == SDQDeviceCommand_CHARGING &&
-       furi_hal_power_is_otg_enabled()) {
+    if(app->data->selectedSubmenu == YuriCableProMaxChargingSubmenuTitle) {
         furi_hal_power_insomnia_exit();
         furi_hal_power_disable_otg();
         furi_thread_flags_set(furi_thread_get_id(app->battery_info_update_thread), WorkerEvtStop);
+        widget_reset(app->widget);
     }
-    app->data->selectedSubmenu = YuriCableProMaxMainMenuTitle;
     app->data->sdq->commandExecuted = false;
     app->data->ledMainMenu = true;
     UNUSED(ctx);
@@ -307,20 +299,20 @@ App* app_alloc() {
     app->data->ledSequenceCommandExecutedPlayed = false;
     app->queue = furi_message_queue_alloc(8, sizeof(Event));
     // Initialize USB UART bridge
-    UsbUartConfig bridgeConfig = {
-        .vcp_ch = 1, .uart_ch = 0, .baudrate_mode = 0, .baudrate = 115200};
+    UsbUartConfig bridgeConfig = {.vcp_ch = 1, .uart_ch = 0, .baudrate_mode = 0, .baudrate = 115200};
     UsbUartBridge* uartBridge = usb_uart_enable(&bridgeConfig);
     usb_uart_set_command_callback(uartBridge, yuricable_command_callback, app);
     // Initialize SDQ
     app->data->sdq = sdq_device_alloc(&SDQ_PIN, uartBridge);
     app->data->sdq->runCommand = SDQDeviceCommand_NONE;
-    app->data->selectedSubmenu = YuriCableProMaxMainMenuTitle;
+    app->data->selectedSubmenu = 0;
     // Initialize SceneManager and Gui
     app->scene_manager = scene_manager_alloc(&yuricable_scene_manager_handlers, app);
     app->view_dispatcher = view_dispatcher_alloc();
     view_dispatcher_set_event_callback_context(app->view_dispatcher, app);
     view_dispatcher_set_custom_event_callback(app->view_dispatcher, yuricable_custom_callback);
-    view_dispatcher_set_navigation_event_callback(app->view_dispatcher, yuricable_back_event_callback);
+    view_dispatcher_set_navigation_event_callback(
+        app->view_dispatcher, yuricable_back_event_callback);
     app->submenu = submenu_alloc();
     view_dispatcher_add_view(app->view_dispatcher, YuriCableProMaxSubmenuView, submenu_get_view(app->submenu));
     app->widget = widget_alloc();

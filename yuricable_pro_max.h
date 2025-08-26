@@ -16,7 +16,7 @@ typedef enum {
     YuriCableProMaxDCSDScene,
     YuriCableProMaxResetScene,
     YuriCableProMaxDFUScene,
-    YuriCableProMaxCharginScene,
+    YuriCableProMaxChargingScene,
     YuriCableProMaxSceneCount
 } YuriCableProMaxScene;
 
@@ -33,21 +33,11 @@ typedef enum {
 } YuriCableProMaxMainMenuSceneIndex;
 
 typedef enum {
-    YuriCableProMaxMainMenuTitle,
     YuriCableProMaxDCSDSubmenuTitle,
     YuriCableProMaxResetSubmenuTitle,
     YuriCableProMaxDFUSubmenuTitle,
     YuriCableProMaxChargingSubmenuTitle,
-    YuriCableProMaxSubmenuTitlesCount
 } YuriCableProMaxSubmenuTitles;
-
-const char* YuriCableProMaxSubmenuTitlesStrings[] = {
-    "YuriCable Pro Max",
-    "DCSD - Bootlog",
-    "Force Reset",
-    "Force DFU",
-    "5V Charging",
-};
 typedef struct {
     SDQDevice* sdq;
     IconAnimation* listeningAnimation;

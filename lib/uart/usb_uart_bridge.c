@@ -414,6 +414,7 @@ static int32_t usb_uart_tx_thread(void* context) {
     return 0;
 }
 
+
 /* VCP callbacks */
 
 static void vcp_on_cdc_tx_complete(void* context) {
