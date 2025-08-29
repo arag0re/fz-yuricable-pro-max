@@ -200,22 +200,33 @@ void yuricable_sdq_scene_on_enter(void* ctx) {
     App* app = ctx;
     widget_reset(app->widget);
     sdq_device_start(app->data->sdq);
-    if(app->data->selectedSubmenu == YuriCableProMaxDCSDSubmenuTitle) {
-        widget_add_string_element(app->widget, 15, 15, AlignLeft, AlignCenter, FontPrimary,   "DCSD - iBoot-log");
-        widget_add_string_element(app->widget, 15, 30, AlignLeft, AlignCenter, FontSecondary, "Waiting for iPhone...");
-    } 
-    if(app->data->selectedSubmenu == YuriCableProMaxChargingSubmenuTitle) {
-        furi_hal_power_enable_otg();
-        furi_hal_power_insomnia_enter();
-        widget_add_string_element(app->widget, 15, 15, AlignLeft, AlignCenter, FontPrimary,   "Lightning Charging");
-        widget_add_string_element(app->widget, 15, 30, AlignLeft, AlignCenter, FontSecondary, "Waiting for Device...");
-        float consumption = app->info.current_gauge;
-        yuricable_draw_battery_consumption(app->widget, (double)consumption);
-        //widget_add_string_element(app->widget, 15, 45, AlignLeft, AlignCenter, FontSecondary, "+");
-        furi_thread_start(app->battery_info_update_thread);
+    switch(app->data->selectedSubmenu){
+        case 0: 
+            widget_add_string_element(app->widget, 15, 15, AlignLeft, AlignCenter, FontPrimary,   "DCSD - iBoot-log");
+            widget_add_string_element(app->widget, 15, 30, AlignLeft, AlignCenter, FontSecondary, "Waiting for iPhone...");
+            break;
+        case 1: 
+            widget_add_string_element(app->widget, 15, 15, AlignLeft, AlignCenter, FontPrimary,   "Froce Reset DevicE");
+            widget_add_string_element(app->widget, 15, 30, AlignLeft, AlignCenter, FontSecondary, "Waiting for iPhone...");
+            break;
+        case 2: 
+            widget_add_string_element(app->widget, 15, 15, AlignLeft, AlignCenter, FontPrimary,   "Force DFU-Mode");
+            widget_add_string_element(app->widget, 15, 30, AlignLeft, AlignCenter, FontSecondary, "Waiting for iPhone...");
+            break;
+        case 3: 
+            furi_hal_power_enable_otg();
+            furi_hal_power_insomnia_enter();
+            widget_add_string_element(app->widget, 15, 15, AlignLeft, AlignCenter, FontPrimary,   "Lightning Charging");
+            widget_add_string_element(app->widget, 15, 30, AlignLeft, AlignCenter, FontSecondary, "Waiting for Device...");
+            float consumption = app->info.current_gauge;
+            yuricable_draw_battery_consumption(app->widget, (double)consumption);
+            //widget_add_string_element(app->widget, 15, 45, AlignLeft, AlignCenter, FontSecondary, "+");
+            furi_thread_start(app->battery_info_update_thread);
+            break;
+        default: break;
     }
-        view_dispatcher_switch_to_view(app->view_dispatcher, YuriCableProMaxWidgetView);
-    }
+    view_dispatcher_switch_to_view(app->view_dispatcher, YuriCableProMaxWidgetView);
+}
 
 bool yuricable_sdq_scene_on_event(void* ctx, SceneManagerEvent event) {
     UNUSED(ctx);
